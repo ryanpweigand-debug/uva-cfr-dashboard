@@ -1,0 +1,662 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   UVA CFR Partner Engagement Dashboard — Stylesheet
+   Brand: Navy #232D4B · Orange #E57200 · Light theme
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Variables ──────────────────────────────────────────────────────────── */
+:root {
+  --uva-navy:    #232D4B;
+  --uva-navy2:   #1A2236;
+  --uva-orange:  #E57200;
+  --uva-orange2: #CC6600;
+  --uva-blue:    #1565C0;
+  --page-bg:     #F7F8FA;
+  --card-bg:     #FFFFFF;
+  --border:      #DEE2E6;
+  --text-dark:   #1A1F2E;
+  --text-mid:    #4A5568;
+  --text-light:  #8492A6;
+  --font-main:   'Libre Franklin', 'Segoe UI', sans-serif;
+  --font-brand:  'Montserrat', 'Segoe UI', sans-serif;
+  --radius:      8px;
+  --shadow:      0 1px 4px rgba(35,45,75,0.08);
+  --shadow-md:   0 4px 16px rgba(35,45,75,0.12);
+}
+
+/* ── Reset / Base ────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  background: var(--page-bg) !important;
+  font-family: var(--font-main) !important;
+  color: var(--text-dark) !important;
+  margin: 0;
+}
+
+/* ── Navbar ──────────────────────────────────────────────────────────────── */
+.cfr-navbar {
+  background: var(--uva-navy) !important;
+  border-bottom: 3px solid var(--uva-orange) !important;
+  padding: 10px 0 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-uva {
+  background: var(--uva-orange);
+  color: #fff;
+  font-family: var(--font-brand);
+  font-weight: 800;
+  font-size: 1.2rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+
+.brand-cfr {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.brand-sub {
+  font-family: var(--font-main);
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.65);
+}
+
+.nav-cfr .nav-link-cfr {
+  color: rgba(255,255,255,0.75) !important;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 6px 14px !important;
+  border-radius: 20px;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+
+.nav-cfr .nav-link-cfr:hover,
+.nav-cfr .nav-link-cfr.active {
+  color: #fff !important;
+  background: rgba(229,114,0,0.25) !important;
+}
+
+/* ── Page Wrapper ────────────────────────────────────────────────────────── */
+.page-wrapper {
+  max-width: 1540px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+.cfr-page {
+  /* page container */
+}
+
+/* ── Page Header ─────────────────────────────────────────────────────────── */
+.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border);
+}
+
+.page-title {
+  font-family: var(--font-brand);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--uva-navy);
+  margin: 0 0 6px 0;
+}
+
+.page-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-mid);
+  margin: 0;
+  max-width: 760px;
+}
+
+/* ── Section ─────────────────────────────────────────────────────────────── */
+.section-block {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+.section-eyebrow {
+  font-family: var(--font-brand);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-light);
+  display: block;
+}
+
+.section-lead {
+  font-size: 0.95rem;
+  color: var(--text-mid);
+}
+
+/* ── Stat Cards ──────────────────────────────────────────────────────────── */
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s;
+  height: 100%;
+}
+
+.stat-card:hover { box-shadow: var(--shadow-md); }
+
+.stat-value {
+  font-family: var(--font-brand);
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--uva-navy);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-sub {
+  font-size: 0.72rem;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+/* PPE economic strip */
+.ppe-strip .stat-card {
+  border-top: 3px solid var(--uva-navy);
+}
+
+/* ── Chart Cards ─────────────────────────────────────────────────────────── */
+.chart-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* ── Filters ─────────────────────────────────────────────────────────────── */
+.filter-row {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.dropdown-label {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: var(--text-light) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px !important;
+}
+
+.cfr-dropdown .Select-control {
+  border-color: var(--border) !important;
+  border-radius: 6px !important;
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+.cfr-table {
+  font-size: 0.84rem !important;
+  color: var(--text-dark) !important;
+}
+
+.cfr-table thead th {
+  font-family: var(--font-brand);
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-light) !important;
+  background: var(--page-bg) !important;
+  border-bottom: 2px solid var(--border) !important;
+  padding: 10px 12px !important;
+}
+
+.cfr-table tbody td {
+  padding: 10px 12px !important;
+  border-color: var(--border) !important;
+  vertical-align: middle !important;
+}
+
+.cfr-table tbody tr:hover td {
+  background: rgba(35,45,75,0.03) !important;
+}
+
+.cfr-table-sm thead th,
+.cfr-table-sm tbody td {
+  padding: 6px 10px !important;
+}
+
+.rank-cell {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.partner-name-cell {
+  font-weight: 600;
+  color: var(--uva-navy);
+}
+
+.score-cell {
+  font-family: var(--font-brand);
+  font-size: 1rem;
+}
+
+.notes-cell {
+  font-size: 0.78rem;
+  color: var(--text-mid);
+  max-width: 260px;
+}
+
+.metric-label-cell {
+  font-size: 0.82rem;
+  color: var(--text-mid);
+  white-space: nowrap;
+}
+
+.metric-pts-cell {
+  font-family: var(--font-brand);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--uva-navy);
+  white-space: nowrap;
+}
+
+.metric-bar-cell {
+  min-width: 120px;
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+.tier-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.tier-badge-lg {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.sector-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.sector-tech        { background: #1976D2; }
+.sector-consulting  { background: #E57200; }
+.sector-defense     { background: #C62828; }
+.sector-healthcare  { background: #2E7D32; }
+.sector-pharma      { background: #6A1B9A; }
+.sector-finance     { background: #00838F; }
+.sector-energy      { background: #558B2F; }
+
+.stage-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.priority-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: transparent;
+}
+
+/* ── Partner Detail ──────────────────────────────────────────────────────── */
+.detail-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.detail-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.detail-partner-name {
+  font-family: var(--font-brand);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--uva-navy);
+  margin-bottom: 4px;
+}
+
+.detail-meta {
+  font-size: 0.82rem;
+  color: var(--text-light);
+}
+
+.detail-score-big {
+  font-family: var(--font-brand);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--uva-navy);
+  line-height: 1;
+  text-align: right;
+}
+
+.detail-score-sub {
+  font-size: 0.72rem;
+  color: var(--text-light);
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-rank {
+  font-size: 0.82rem;
+  color: var(--uva-orange);
+  font-weight: 600;
+  text-align: right;
+  margin-top: 2px;
+}
+
+.detail-action-text {
+  font-size: 0.72rem;
+  color: var(--text-mid);
+  max-width: 200px;
+}
+
+.score-pill {
+  background: var(--page-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.score-pill-value {
+  font-family: var(--font-brand);
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.score-pill-label {
+  font-size: 0.72rem;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.detail-notes {
+  background: rgba(35,45,75,0.03);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.84rem;
+  color: var(--text-mid);
+}
+
+/* ── Strategic Plan Cards ────────────────────────────────────────────────── */
+.sp-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  height: 100%;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s;
+}
+
+.sp-card:hover { box-shadow: var(--shadow-md); }
+
+.sp-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.sp-code {
+  font-family: var(--font-brand);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.sp-card-title {
+  font-family: var(--font-brand);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.sp-card-desc {
+  font-size: 0.8rem;
+  color: var(--text-mid);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.sp-progress-bg {
+  background: var(--page-bg);
+  border-radius: 3px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.sp-meta {
+  font-size: 0.72rem;
+  color: var(--text-light);
+}
+
+.sp-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ── Benchmarking ────────────────────────────────────────────────────────── */
+.insight-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  height: 100%;
+  box-shadow: var(--shadow);
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.insight-title {
+  font-family: var(--font-brand);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.insight-body {
+  font-size: 0.82rem;
+  color: var(--text-mid);
+  line-height: 1.55;
+}
+
+/* ── Procurement ─────────────────────────────────────────────────────────── */
+.holistic-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  text-align: center;
+  height: 100%;
+  box-shadow: var(--shadow);
+}
+
+.holistic-title {
+  font-family: var(--font-brand);
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.holistic-value {
+  font-family: var(--font-brand);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+}
+
+.holistic-desc {
+  font-size: 0.78rem;
+  color: var(--text-mid);
+  line-height: 1.5;
+}
+
+.phase-explainer {
+  background: rgba(35,45,75,0.04);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: var(--text-mid);
+}
+
+/* ── Recommendations ─────────────────────────────────────────────────────── */
+.rec-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  height: 100%;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s;
+}
+
+.rec-card:hover { box-shadow: var(--shadow-md); }
+
+.rec-header { margin-bottom: 6px; }
+
+.rec-title {
+  font-family: var(--font-brand);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--uva-navy);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.rec-desc {
+  font-size: 0.82rem;
+  color: var(--text-mid);
+  line-height: 1.5;
+}
+
+.rec-value {
+  font-family: var(--font-brand);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2E7D32;
+  white-space: nowrap;
+}
+
+.rec-category {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+
+.rec-meta {
+  font-size: 0.72rem;
+  color: var(--text-light);
+}
+
+/* ── Placeholder text ────────────────────────────────────────────────────── */
+.placeholder-text {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.9rem;
+  background: var(--page-bg);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+/* ── Scrollbars (Webkit) ─────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--page-bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+
+/* ── Utilities ───────────────────────────────────────────────────────────── */
+.fw-semibold { font-weight: 600 !important; }
+
+/* Dash override: remove default card padding weirdness */
+.dash-spreadsheet-container .dash-spreadsheet { font-size: 0.82rem; }

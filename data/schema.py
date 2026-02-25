@@ -1,0 +1,114 @@
+"""
+UVA CFR Partner Engagement Dashboard — Database Schema
+"""
+
+import os
+from sqlalchemy import (
+    create_engine, Column, Integer, Float, String, Text, Date, Boolean
+)
+from sqlalchemy.orm import declarative_base
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH  = os.path.join(BASE_DIR, "cfr_partners.db")
+DATABASE_URL = f"sqlite:///{DB_PATH}"
+
+engine = create_engine(DATABASE_URL, echo=False)
+Base   = declarative_base()
+
+
+class Partner(Base):
+    """Corporate / organizational partner record."""
+    __tablename__ = "partners"
+    id   = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String,  nullable=False, unique=True)
+    sector = Column(String, nullable=False)    # Tech, Consulting, Defense, Healthcare, Pharma, Finance, Energy
+    hq_city    = Column(String, nullable=True)
+    hq_state   = Column(String, nullable=True)
+    revenue_b  = Column(Float,  nullable=True)  # annual revenue in $B
+    employees_k= Column(Float,  nullable=True)  # employees in thousands
+    notes      = Column(Text,   nullable=True)
+
+    # ── Relationship Strength metrics (70 pts) ─────────────────────────────
+    sponsored_research_5yr    = Column(Float, nullable=False, default=0)  # $ last 5 FYs
+    sponsored_research_alltime= Column(Float, nullable=False, default=0)  # $ all-time
+    philanthropy_5yr          = Column(Float, nullable=False, default=0)  # $ last 5 FYs
+    philanthropy_alltime      = Column(Float, nullable=False, default=0)  # $ all-time
+    research_footprint        = Column(Float, nullable=False, default=0)  # active project count
+    legal_activity            = Column(Float, nullable=False, default=0)  # NDA/MTA/IP count
+    talent_pipeline           = Column(Float, nullable=False, default=0)  # hires+interns/yr
+    engagement_depth          = Column(Float, nullable=False, default=0)  # 0-10 qualitative
+
+    # ── Strategic Opportunity metrics (30 pts) ─────────────────────────────
+    strategic_fit       = Column(Float, nullable=False, default=0)  # 0-10
+    growth_greenfield   = Column(Float, nullable=False, default=0)  # 0-10
+    access_influence    = Column(Float, nullable=False, default=0)  # 0-10
+    feasibility_timing  = Column(Float, nullable=False, default=0)  # 0-10
+
+    # ── CFR Strategic Plan alignment (SP-01 to SP-06, each 0-10) ──────────
+    sp01_org_structure  = Column(Float, nullable=False, default=5)
+    sp02_front_door     = Column(Float, nullable=False, default=5)
+    sp03_metrics        = Column(Float, nullable=False, default=5)
+    sp04_team_capacity  = Column(Float, nullable=False, default=5)
+    sp05_data_crm       = Column(Float, nullable=False, default=5)
+    sp06_awareness      = Column(Float, nullable=False, default=5)
+
+    # ── Procurement pipeline ────────────────────────────────────────────────
+    procurement_stage   = Column(String,  nullable=True)   # Discovery/Design/Implementation/Active
+    est_annual_value_k  = Column(Float,   nullable=True)   # estimated annual $k
+    procurement_notes   = Column(Text,    nullable=True)
+
+
+class BenchmarkPeer(Base):
+    """Peer institution benchmarking data (from 2025 CFR Benchmarking doc)."""
+    __tablename__ = "benchmark_peers"
+    id   = Column(Integer, primary_key=True, autoincrement=True)
+    institution = Column(String, nullable=False)
+    state       = Column(String, nullable=False)
+    tier        = Column(String, nullable=False)   # Aspirational / Peer / Emerging
+
+    # Maturity indicators (0-10 scale)
+    specialist_model       = Column(Float, nullable=False, default=0)
+    holistic_front_door    = Column(Float, nullable=False, default=0)
+    modern_metrics         = Column(Float, nullable=False, default=0)
+    crm_infrastructure     = Column(Float, nullable=False, default=0)
+    executive_engagement   = Column(Float, nullable=False, default=0)
+    cross_campus_alignment = Column(Float, nullable=False, default=0)
+
+    active_partners     = Column(Integer, nullable=True)
+    annual_research_m   = Column(Float,   nullable=True)  # $M sponsored research
+    annual_philanthropy_m = Column(Float, nullable=True)  # $M philanthropy
+    cfr_fte             = Column(Float,   nullable=True)  # FTE in corporate relations
+    notes               = Column(Text,    nullable=True)
+
+
+class StrategicPriority(Base):
+    """CFR Strategic Plan — 6 priorities tracker."""
+    __tablename__ = "strategic_priorities"
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    code        = Column(String,  nullable=False, unique=True)   # SP-01 … SP-06
+    title       = Column(String,  nullable=False)
+    description = Column(Text,    nullable=True)
+    status      = Column(String,  nullable=False, default="In Progress")  # Not Started/In Progress/Complete
+    progress_pct= Column(Float,   nullable=False, default=0)    # 0-100
+    owner       = Column(String,  nullable=True)
+    target_date = Column(String,  nullable=True)
+    priority_weight = Column(Float, nullable=False, default=1.0)  # relative importance
+
+
+class Recommendation(Base):
+    """CFR Recommendations registry."""
+    __tablename__ = "recommendations"
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    partner_id  = Column(Integer, nullable=True)    # FK to partners.id (nullable = institution-wide)
+    title       = Column(String,  nullable=False)
+    category    = Column(String,  nullable=False)   # Research/Philanthropy/Talent/Strategic/Procurement
+    priority    = Column(String,  nullable=False)   # High/Medium/Low
+    description = Column(Text,    nullable=True)
+    est_value_k = Column(Float,   nullable=True)    # estimated $k impact
+    timeline    = Column(String,  nullable=True)    # e.g. "Q3 2025"
+    status      = Column(String,  nullable=False, default="Open")  # Open/In Progress/Closed
+
+
+def create_all():
+    Base.metadata.create_all(engine)
+    return engine
