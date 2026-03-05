@@ -33,12 +33,13 @@ app = dash.Dash(
 
 # ── Navbar ────────────────────────────────────────────────────────────────────
 NAV_LINKS = [
-    {"label": "Overview",       "href": "/"},
-    {"label": "Partner Scoring","href": "/scoring"},
-    {"label": "Strategic Plan", "href": "/strategic-plan"},
-    {"label": "Benchmarking",   "href": "/benchmarking"},
-    {"label": "Procurement",    "href": "/procurement"},
-    {"label": "Recommendations","href": "/recommendations"},
+    {"label": "Overview",        "href": "/"},
+    {"label": "Partner Scoring", "href": "/scoring"},
+    {"label": "Dual Score",      "href": "/dual-score"},
+    {"label": "Strategic Plan",  "href": "/strategic-plan"},
+    {"label": "Benchmarking",    "href": "/benchmarking"},
+    {"label": "Procurement",     "href": "/procurement"},
+    {"label": "Recommendations", "href": "/recommendations"},
 ]
 
 navbar = dbc.Navbar(

@@ -660,3 +660,63 @@ body {
 
 /* Dash override: remove default card padding weirdness */
 .dash-spreadsheet-container .dash-spreadsheet { font-size: 0.82rem; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Dual Score Model Components
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Theory explainer text block ─────────────────────────────────────────── */
+.theory-explainer {
+  font-size: 0.9rem;
+  color: var(--text-mid);
+  line-height: 1.65;
+  max-width: 860px;
+}
+
+/* ── Partner type card ───────────────────────────────────────────────────── */
+.dual-type-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 18px 16px 14px;
+  box-shadow: var(--shadow);
+  height: 100%;
+  transition: box-shadow 0.15s ease;
+}
+
+.dual-type-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ── RSI / SOI dimension badges ──────────────────────────────────────────── */
+.dual-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.dual-badge-rsi {
+  background: rgba(35, 45, 75, 0.10);
+  color: var(--uva-navy);
+  border: 1px solid rgba(35, 45, 75, 0.2);
+}
+
+.dual-badge-soi {
+  background: rgba(229, 114, 0, 0.10);
+  color: var(--uva-orange2);
+  border: 1px solid rgba(229, 114, 0, 0.25);
+}
+
+/* ── Dual KPI row spacing ────────────────────────────────────────────────── */
+#dual-kpi-row .stat-card {
+  border-left: 4px solid var(--border);
+}
+
+#dual-kpi-row .stat-card:nth-child(1) { border-left-color: #E57200; }
+#dual-kpi-row .stat-card:nth-child(2) { border-left-color: #1565C0; }
+#dual-kpi-row .stat-card:nth-child(3) { border-left-color: #2E7D32; }
+#dual-kpi-row .stat-card:nth-child(4) { border-left-color: #7B1FA2; }

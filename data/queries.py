@@ -113,6 +113,94 @@ def compute_judgment_scores(df: pd.DataFrame) -> pd.DataFrame:
     return scored
 
 
+# ── Dual Score Model ──────────────────────────────────────────────────────────
+# RSI = Relationship Strength Index (0-70) — rearview proof metrics only
+# SOI = Strategic Opportunity Index  (0-30) — forward-looking opportunity only
+# Partner types defined by RSI/SOI quadrant thresholds (midpoints: 35 / 15)
+
+DUAL_PARTNER_TYPES = {
+    "Anchor":   {"rsi_min": 35, "soi_min": 15, "color": "#E57200",
+                 "icon": "⚓", "action": "Maintain & expand — executive relationship management"},
+    "Growth":   {"rsi_min":  0, "soi_min": 15, "color": "#1565C0",
+                 "icon": "🚀", "action": "Business development — new engagement pipeline"},
+    "Legacy":   {"rsi_min": 35, "soi_min":  0, "color": "#2E7D32",
+                 "icon": "🏛️", "action": "Stewardship — protect relationship, explore new angles"},
+    "Emerging": {"rsi_min":  0, "soi_min":  0, "color": "#7B1FA2",
+                 "icon": "🌱", "action": "Monitor — assess strategic fit and timing"},
+}
+
+def get_dual_type(rsi: float, soi: float) -> tuple:
+    """
+    Classify partner into one of four types based on RSI/SOI split.
+    RSI midpoint = 35 (half of 70), SOI midpoint = 15 (half of 30).
+    Returns (type_label, color, icon, action).
+    """
+    high_rsi = rsi >= 35
+    high_soi = soi >= 15
+    if high_rsi and high_soi:
+        t = "Anchor"
+    elif not high_rsi and high_soi:
+        t = "Growth"
+    elif high_rsi and not high_soi:
+        t = "Legacy"
+    else:
+        t = "Emerging"
+    d = DUAL_PARTNER_TYPES[t]
+    return t, d["color"], d["icon"], d["action"]
+
+
+def compute_dual_scores(df: pd.DataFrame, method: str = "percentile") -> pd.DataFrame:
+    """
+    Dual Score Model — keeps RSI and SOI as separate scores rather than
+    collapsing into a single composite.  Adds:
+      rsi          — Relationship Strength Index (0–70)
+      soi          — Strategic Opportunity Index (0–30)
+      rsi_pct      — RSI as % of 70
+      soi_pct      — SOI as % of 30
+      dual_type    — Anchor / Growth / Legacy / Emerging
+      dual_color   — hex color for that type
+      dual_icon    — emoji icon
+      dual_action  — recommended action
+    """
+    n = len(df)
+    scored = df.copy()
+
+    if method == "judgment":
+        QUALITATIVE = {"engagement_depth", "strategic_fit", "growth_greenfield",
+                       "access_influence", "feasibility_timing"}
+        for col, _, max_pts in ALL_METRICS:
+            if col in QUALITATIVE:
+                rating = scored[col]
+            else:
+                col_max = scored[col].max()
+                rating = (scored[col] / col_max * 10) if col_max > 0 else 0
+            scored[f"_d_{col}"] = (rating / 10) * max_pts
+    else:
+        for col, _, max_pts in ALL_METRICS:
+            ranks = df[col].rank(method="average", ascending=True)
+            percentile = (ranks - 1) / (n - 1) * 100 if n > 1 else pd.Series([100.0] * n, index=df.index)
+            scored[f"_d_{col}"] = (percentile / 100) * max_pts
+
+    scored["rsi"] = sum(scored[f"_d_{col}"] for col, _, _ in RELATIONSHIP_METRICS)
+    scored["soi"] = sum(scored[f"_d_{col}"] for col, _, _ in STRATEGIC_METRICS)
+    scored["rsi_pct"] = (scored["rsi"] / 70 * 100).round(1)
+    scored["soi_pct"] = (scored["soi"] / 30 * 100).round(1)
+    scored["rsi_rank"] = scored["rsi"].rank(ascending=False, method="min").astype(int)
+    scored["soi_rank"] = scored["soi"].rank(ascending=False, method="min").astype(int)
+
+    type_data = scored.apply(lambda r: pd.Series(get_dual_type(r["rsi"], r["soi"])), axis=1)
+    type_data.columns = ["dual_type", "dual_color", "dual_icon", "dual_action"]
+    scored = pd.concat([scored, type_data], axis=1)
+
+    # Drop internal columns
+    scored = scored.drop(columns=[c for c in scored.columns if c.startswith("_d_")])
+    return scored
+
+
+def load_dual_scored_partners(method: str = "percentile") -> pd.DataFrame:
+    return compute_dual_scores(load_partners(), method)
+
+
 # ── Data Loaders ──────────────────────────────────────────────────────────────
 
 def load_partners() -> pd.DataFrame:
