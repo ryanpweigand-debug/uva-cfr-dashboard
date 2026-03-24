@@ -109,6 +109,36 @@ class Recommendation(Base):
     status      = Column(String,  nullable=False, default="Open")  # Open/In Progress/Closed
 
 
+class FundingOpportunity(Base):
+    """
+    Consolidated funding opportunity record.
+    CFR staff paste/upload from 3 listservs into one place.
+    """
+    __tablename__ = "funding_opportunities"
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Core fields (always required)
+    title       = Column(String, nullable=False)
+    sponsor     = Column(String, nullable=False)       # NSF, NIH, DARPA, Private, etc.
+    deadline    = Column(String, nullable=True)        # stored as string e.g. "2025-09-15"
+    amount_min_k= Column(Float,  nullable=True)        # min award in $k
+    amount_max_k= Column(Float,  nullable=True)        # max award in $k
+
+    # Classification
+    source      = Column(String, nullable=True)        # which listserv/list it came from
+    research_areas = Column(String, nullable=True)     # comma-separated tags: "Health, AI, Energy"
+    eligibility = Column(String, nullable=True)        # "Faculty", "Postdoc", "Team", "All"
+    opp_type    = Column(String, nullable=True)        # Grant / Contract / Fellowship / RFP
+    status      = Column(String, nullable=False, default="Active")  # Active / Closing Soon / Expired / Archived
+
+    # Detail
+    description = Column(Text,   nullable=True)
+    url         = Column(String, nullable=True)        # link to full RFP
+    notes       = Column(Text,   nullable=True)        # CFR staff notes
+    added_by    = Column(String, nullable=True)        # staff name
+    date_added  = Column(String, nullable=True)        # ISO date string
+
+
 def create_all():
     Base.metadata.create_all(engine)
     return engine

@@ -720,3 +720,124 @@ body {
 #dual-kpi-row .stat-card:nth-child(2) { border-left-color: #1565C0; }
 #dual-kpi-row .stat-card:nth-child(3) { border-left-color: #2E7D32; }
 #dual-kpi-row .stat-card:nth-child(4) { border-left-color: #7B1FA2; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Funding Opportunities Page
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.funding-opp-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--uva-navy);
+  border-radius: var(--radius);
+  padding: 18px 20px 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.15s ease, border-left-color 0.15s ease;
+}
+
+.funding-opp-card:hover {
+  box-shadow: var(--shadow-md);
+  border-left-color: var(--uva-orange);
+}
+
+.funding-card-title {
+  font-family: var(--font-brand);
+  font-size: 0.97rem;
+  font-weight: 700;
+  color: var(--uva-navy);
+  margin-bottom: 3px;
+  line-height: 1.35;
+}
+
+.funding-card-sponsor {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--uva-orange);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.funding-type-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--page-bg);
+}
+
+.funding-area-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.funding-area-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 10px;
+  background: rgba(35, 45, 75, 0.08);
+  color: var(--uva-navy);
+  border: 1px solid rgba(35, 45, 75, 0.15);
+}
+
+.funding-card-desc {
+  font-size: 0.82rem;
+  color: var(--text-mid);
+  line-height: 1.55;
+}
+
+.funding-card-notes {
+  font-size: 0.78rem;
+  color: var(--text-mid);
+  background: rgba(229, 114, 0, 0.05);
+  border-left: 3px solid var(--uva-orange);
+  padding: 4px 10px;
+  border-radius: 0 4px 4px 0;
+}
+
+.funding-rfp-link {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--uva-orange);
+  text-decoration: none;
+}
+.funding-rfp-link:hover { text-decoration: underline; }
+
+.cfr-input {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  font-size: 0.85rem !important;
+  font-family: var(--font-main) !important;
+  color: var(--text-dark) !important;
+  background: var(--card-bg) !important;
+  padding: 6px 10px !important;
+}
+
+.cfr-input:focus {
+  border-color: var(--uva-orange) !important;
+  box-shadow: 0 0 0 2px rgba(229,114,0,0.15) !important;
+  outline: none !important;
+}
+
+.cfr-btn {
+  background: var(--uva-navy) !important;
+  border-color: var(--uva-navy) !important;
+  font-family: var(--font-brand) !important;
+  font-weight: 700 !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0.3px !important;
+  border-radius: var(--radius) !important;
+  padding: 8px 20px !important;
+}
+
+.cfr-btn:hover {
+  background: var(--uva-orange) !important;
+  border-color: var(--uva-orange) !important;
+}

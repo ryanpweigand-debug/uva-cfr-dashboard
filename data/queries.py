@@ -230,6 +230,90 @@ def load_recommendations(partner_id: int = None) -> pd.DataFrame:
     return pd.read_sql(q, engine)
 
 
+# ── Funding Opportunities ──────────────────────────────────────────────────────
+
+def load_funding_opportunities(status: str = None, research_area: str = None,
+                                opp_type: str = None, source: str = None) -> pd.DataFrame:
+    q = "SELECT * FROM funding_opportunities"
+    filters = []
+    if status and status != "All":
+        filters.append(f"status = '{status}'")
+    if opp_type and opp_type != "All":
+        filters.append(f"opp_type = '{opp_type}'")
+    if source and source != "All":
+        filters.append(f"source = '{source}'")
+    if filters:
+        q += " WHERE " + " AND ".join(filters)
+    q += " ORDER BY deadline ASC"
+    df = pd.read_sql(q, engine)
+    # Area filter done in Python (comma-separated field)
+    if research_area and research_area != "All":
+        df = df[df["research_areas"].fillna("").str.contains(research_area, case=False)]
+    return df
+
+
+def add_funding_opportunity(data: dict) -> bool:
+    """Insert a new funding opportunity. Returns True on success."""
+    from sqlalchemy.orm import Session
+    from schema import FundingOpportunity
+    import datetime
+    data["date_added"] = datetime.date.today().isoformat()
+    try:
+        with Session(engine) as session:
+            session.add(FundingOpportunity(**data))
+            session.commit()
+        return True
+    except Exception as e:
+        print(f"Error adding opportunity: {e}")
+        return False
+
+
+def delete_funding_opportunity(opp_id: int) -> bool:
+    """Delete a funding opportunity by ID."""
+    from sqlalchemy.orm import Session
+    from schema import FundingOpportunity
+    try:
+        with Session(engine) as session:
+            obj = session.get(FundingOpportunity, opp_id)
+            if obj:
+                session.delete(obj)
+                session.commit()
+        return True
+    except Exception as e:
+        print(f"Error deleting opportunity: {e}")
+        return False
+
+
+def update_funding_status(opp_id: int, new_status: str) -> bool:
+    """Update just the status field of a funding opportunity."""
+    from sqlalchemy.orm import Session
+    from schema import FundingOpportunity
+    try:
+        with Session(engine) as session:
+            obj = session.get(FundingOpportunity, opp_id)
+            if obj:
+                obj.status = new_status
+                session.commit()
+        return True
+    except Exception:
+        return False
+
+
+def funding_summary_kpis(df: pd.DataFrame) -> dict:
+    """Compute KPIs for the funding opportunities dashboard header."""
+    active = df[df["status"] == "Active"]
+    closing = df[df["status"] == "Closing Soon"]
+    sources = df["source"].nunique()
+    total_max = df["amount_max_k"].sum() / 1000  # in $M
+    return {
+        "total": len(df),
+        "active": len(active),
+        "closing_soon": len(closing),
+        "sources": sources,
+        "total_max_m": round(total_max, 1),
+    }
+
+
 # ── Portfolio KPIs ─────────────────────────────────────────────────────────────
 
 def portfolio_kpis(method: str = "percentile") -> dict:

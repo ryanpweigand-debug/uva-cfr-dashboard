@@ -40,6 +40,7 @@ NAV_LINKS = [
     {"label": "Benchmarking",    "href": "/benchmarking"},
     {"label": "Procurement",     "href": "/procurement"},
     {"label": "Recommendations", "href": "/recommendations"},
+    {"label": "Funding",         "href": "/funding"},
 ]
 
 navbar = dbc.Navbar(

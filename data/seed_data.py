@@ -6,7 +6,7 @@ and recommendations derived from the CFR source documents.
 
 import os
 from sqlalchemy.orm import Session
-from schema import create_all, engine, Partner, BenchmarkPeer, StrategicPriority, Recommendation
+from schema import create_all, engine, Partner, BenchmarkPeer, StrategicPriority, Recommendation, FundingOpportunity
 import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -289,6 +289,171 @@ def seed_recommendations(session):
         ))
 
 
+def seed_funding_opportunities(session):
+    """
+    Sample funding opportunities drawn from 3 fictional listservs:
+      List A — OVPR Research Funding Digest
+      List B — Corporate Relations Opportunities Bulletin
+      List C — School of Engineering & Applied Science Grants Alert
+    """
+    opps = [
+        # (title, sponsor, deadline, amt_min_k, amt_max_k, source, areas, eligibility, opp_type, status, desc, url, notes)
+        ("NSF Convergence Accelerator — Track J: Food & Energy Nexus",
+         "NSF", "2025-09-12", 750, 5000,
+         "List A — OVPR Digest",
+         "Energy, Environment, Food Systems",
+         "Faculty", "Grant", "Active",
+         "Supports convergence research teams tackling real-world challenges at the food-energy nexus. "
+         "Phase 1 awards up to $750k; Phase 2 up to $5M. Teams must include non-academic partners.",
+         "https://www.nsf.gov/convergence-accelerator", "Strong alignment with Dominion Energy + environmental policy work"),
+
+        ("NIH R01 — Alzheimer's Disease & Related Dementias",
+         "NIH/NIA", "2025-10-05", 250, 500,
+         "List A — OVPR Digest",
+         "Health, Neuroscience, Aging",
+         "Faculty", "Grant", "Active",
+         "Standard R01 mechanism for basic and translational research on ADRD. "
+         "Direct costs capped at $500k/yr. Requires UVA Health institutional sign-off.",
+         "https://grants.nih.gov", "Aligned with Eli Lilly Alzheimer's research notes; tag to UVA Health"),
+
+        ("DARPA Young Faculty Award (YFA) — Open Broad Agency Announcement",
+         "DARPA", "2025-08-30", 500, 1000,
+         "List A — OVPR Digest",
+         "Defense, AI, Engineering, Cybersecurity",
+         "Faculty", "Grant", "Closing Soon",
+         "Identifies and engages rising stars in junior faculty positions who are likely to make "
+         "significant contributions to national security science and engineering. "
+         "Awards up to $1M over 2 years.",
+         "https://www.darpa.mil/work-with-us/young-faculty-award", "Great match for SEAS faculty; deadline in 6 weeks"),
+
+        ("Siemens Foundation — STEM Education Research Grant",
+         "Siemens Foundation", "2025-11-01", 100, 300,
+         "List B — Corporate Relations Bulletin",
+         "Education, STEM, Workforce",
+         "Faculty", "Grant", "Active",
+         "Supports applied research on STEM education pipeline, workforce development, "
+         "and diversity in engineering fields. Priority given to proposals with industry co-investigators.",
+         "https://www.siemens-foundation.org", "Direct tie to Siemens corporate partner; flag for CFR relationship manager"),
+
+        ("Google Research Scholar Program",
+         "Google", "2025-10-15", 60, 60,
+         "List B — Corporate Relations Bulletin",
+         "AI, Machine Learning, Computer Science, Data",
+         "Faculty", "Grant", "Active",
+         "Unrestricted gifts to support early-career faculty pursuing research in CS and related fields. "
+         "$60k award, no deliverables. Nomination via Google Research website.",
+         "https://research.google/programs/research-scholar-program/",
+         "Flag for faculty working with Google partners; CFR can facilitate intro"),
+
+        ("Microsoft Research Outreach — Azure for Research Credits",
+         "Microsoft", "2025-12-31", 20, 150,
+         "List B — Corporate Relations Bulletin",
+         "AI, Cloud Computing, Data Science, Health",
+         "Faculty", "Grant", "Active",
+         "Provides Azure compute credits and technical support for research projects. "
+         "Not a cash award — compute credits ranging from $20k to $150k equivalent. "
+         "Rolling applications reviewed quarterly.",
+         "https://www.microsoft.com/en-us/research/academic-program/microsoft-azure-for-research/",
+         "Microsoft is an active partner — CFR can warm intro"),
+
+        ("DOE Office of Science — Basic Energy Sciences Early Career Award",
+         "Dept. of Energy", "2025-09-26", 750, 750,
+         "List C — SEAS Grants Alert",
+         "Energy, Materials Science, Chemistry, Physics",
+         "Faculty", "Grant", "Closing Soon",
+         "Awards up to $750k over 5 years to early-career researchers at universities. "
+         "Focus on fundamental research in chemical sciences, geosciences, and energy biosciences.",
+         "https://science.osti.gov/early-career", "Priority for SEAS and A&S faculty in first 10 years of appointment"),
+
+        ("AFRL University Research Initiative — Autonomy & Human-Machine Teaming",
+         "Air Force Research Lab", "2025-11-15", 300, 2000,
+         "List C — SEAS Grants Alert",
+         "Defense, AI, Autonomy, Engineering",
+         "Faculty", "Contract", "Active",
+         "Seeking proposals on autonomous systems research and human-machine teaming. "
+         "Multi-year contracts ranging from $300k to $2M. Requires DoD security considerations.",
+         "https://www.afrl.af.mil", "Aligns with Raytheon, Lockheed, Northrop Grumman partners; tag for defense-adjacent faculty"),
+
+        ("Robert Wood Johnson Foundation — Health Equity Research",
+         "RWJF", "2025-10-30", 500, 2000,
+         "List A — OVPR Digest",
+         "Health, Health Equity, Social Sciences, Policy",
+         "Faculty", "Grant", "Active",
+         "Supports research that advances health equity and addresses systemic barriers to health. "
+         "Priority given to community-partnered research with measurable policy impact.",
+         "https://www.rwjf.org", "Cross-list: appeared on List A and List B — deduplicated here"),
+
+        ("Capital One Spark for Good — Data Science for Social Impact",
+         "Capital One", "2025-09-01", 50, 200,
+         "List B — Corporate Relations Bulletin",
+         "Data Science, Finance, Social Impact, AI",
+         "Faculty", "Grant", "Closing Soon",
+         "Supports university-based data science research with measurable social impact. "
+         "Capital One McLean HQ is a natural partner. Proposals should include internship component.",
+         "https://www.capitalone.com/tech/machine-learning/",
+         "Active Capital One corporate relationship — CFR intro available; deadline in <30 days"),
+
+        ("NSF CAREER Award — Faculty Early Career Development Program",
+         "NSF", "2026-02-20", 400, 600,
+         "List A — OVPR Digest",
+         "All STEM fields",
+         "Faculty", "Grant", "Active",
+         "NSF's most prestigious award for early-career faculty. Supports research and education "
+         "activities in all NSF-supported disciplines. Must be in first 7 years of tenure-track appointment.",
+         "https://www.nsf.gov/career", "Perennial — remind RAs to track eligible faculty cohort each cycle"),
+
+        ("Pfizer Medical Research Grant Program",
+         "Pfizer", "2025-12-15", 100, 500,
+         "List B — Corporate Relations Bulletin",
+         "Health, Pharma, Clinical Research, Oncology",
+         "Faculty", "Grant", "Active",
+         "Supports investigator-initiated research in areas aligned with Pfizer therapeutic priorities: "
+         "oncology, rare disease, cardiovascular, immunology. No indirect costs taken.",
+         "https://www.pfizer.com/science/research/grants",
+         "Pfizer is an active CFR partner — relationship manager should flag to UVA Health faculty"),
+
+        ("Commonwealth of Virginia — Innovation Commercialization Grant",
+         "VA CEED / VEDP", "2025-10-10", 50, 500,
+         "List A — OVPR Digest",
+         "Commercialization, Entrepreneurship, Technology Transfer",
+         "Faculty", "Grant", "Active",
+         "Supports faculty-led technology commercialization with Virginia economic development impact. "
+         "Requires industry co-sponsorship letter. Preference for companies in Virginia.",
+         "https://www.vedp.org", "Dominion Energy and Capital One could serve as co-sponsors; flag to CFR"),
+
+        ("Raytheon University Research Program — Quantum & Photonics",
+         "Raytheon", "2025-11-30", 200, 800,
+         "List C — SEAS Grants Alert",
+         "Defense, Quantum Computing, Physics, Engineering",
+         "Faculty", "Contract", "Active",
+         "Raytheon Technologies Research Center funding for university partners in quantum sensing, "
+         "quantum communications, and photonic systems. Proprietary research with IP negotiation.",
+         "https://www.rtx.com/raytheon/what-we-do/technology/university-research",
+         "Raytheon is active CFR partner — CFR relationship manager can facilitate direct intro to RTRC"),
+
+        ("Wellcome Trust — Mental Health Research Priority Program",
+         "Wellcome Trust", "2026-01-15", 500, 5000,
+         "List A — OVPR Digest",
+         "Health, Mental Health, Neuroscience, Global Health",
+         "Faculty", "Grant", "Active",
+         "Supports ambitious programmes that will transform understanding of mental health conditions "
+         "and develop new approaches to prevention and treatment. International collaborations welcome.",
+         "https://wellcome.org/grant-funding", "Appeared on List A only; high value — flag to UVA Health, Psychiatry dept"),
+    ]
+
+    for o in opps:
+        (title, sponsor, deadline, amt_min, amt_max, source, areas,
+         eligibility, opp_type, status, desc, url, notes) = o
+        session.add(FundingOpportunity(
+            title=title, sponsor=sponsor, deadline=deadline,
+            amount_min_k=float(amt_min), amount_max_k=float(amt_max),
+            source=source, research_areas=areas, eligibility=eligibility,
+            opp_type=opp_type, status=status, description=desc,
+            url=url, notes=notes, added_by="CFR Seed Data",
+            date_added="2025-07-01",
+        ))
+
+
 def ensure_db():
     """Create DB and seed data if it doesn't already exist."""
     db_path = os.path.join(BASE_DIR, "cfr_partners.db")
@@ -301,6 +466,7 @@ def ensure_db():
         seed_benchmarks(session)
         seed_strategic_priorities(session)
         seed_recommendations(session)
+        seed_funding_opportunities(session)
         session.commit()
     print(f"Database created: {db_path}")
 
