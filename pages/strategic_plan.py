@@ -291,7 +291,7 @@ def build_layout():
     ], className="cfr-page")
 
 
-layout = build_layout()
+layout = build_layout  # callable — Dash calls this lazily at request time
 
 
 @callback(

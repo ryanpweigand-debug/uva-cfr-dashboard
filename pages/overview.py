@@ -259,7 +259,7 @@ def build_layout(method="percentile"):
     ], className="cfr-page")
 
 
-layout = build_layout()
+layout = build_layout  # callable — Dash calls this lazily at request time
 
 
 # ── Callbacks ─────────────────────────────────────────────────────────────────

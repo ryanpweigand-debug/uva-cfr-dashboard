@@ -13,10 +13,14 @@ sys.path.insert(0, BASE_DIR)
 sys.path.insert(0, os.path.join(BASE_DIR, "data"))
 sys.path.insert(0, os.path.join(BASE_DIR, "components"))
 
+# ── DB init FIRST — must run before pages auto-discover and query the DB ──────
+from data.seed_data import ensure_db
+ensure_db()
+
 import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc
-# ── App — must be created BEFORE pages auto-discover ──────────────────────────
+# ── App — created after DB is ready ───────────────────────────────────────────
 app = dash.Dash(
     __name__,
     use_pages=True,
@@ -85,9 +89,7 @@ app.layout = html.Div([
 ], id="app-root")
 
 
-# ── DB init & server export (runs on gunicorn import AND local run) ───────────
-from data.seed_data import ensure_db
-ensure_db()
+# ── Server export for gunicorn ────────────────────────────────────────────────
 server = app.server  # gunicorn references this as: gunicorn app:server
 
 # ── Run ───────────────────────────────────────────────────────────────────────

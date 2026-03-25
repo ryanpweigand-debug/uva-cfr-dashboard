@@ -310,7 +310,7 @@ def insight_card(icon, title, body, color):
     ], className="insight-card", style={"borderLeft": f"4px solid {color}"})
 
 
-layout = build_layout()
+layout = build_layout  # callable — Dash calls this lazily at request time
 
 
 @callback(
