@@ -125,11 +125,18 @@ class FundingOpportunity(Base):
     amount_max_k= Column(Float,  nullable=True)        # max award in $k
 
     # Classification
-    source      = Column(String, nullable=True)        # which listserv/list it came from
+    source      = Column(String, nullable=True)        # which listserv/owner it came from
     research_areas = Column(String, nullable=True)     # comma-separated tags: "Health, AI, Energy"
     eligibility = Column(String, nullable=True)        # "Faculty", "Postdoc", "Team", "All"
-    opp_type    = Column(String, nullable=True)        # Grant / Contract / Fellowship / RFP
+    opp_type    = Column(String, nullable=True)        # Grant / Contract / Fellowship / RFP / LSO
     status      = Column(String, nullable=False, default="Active")  # Active / Closing Soon / Expired / Archived
+
+    # LSO — Limited Submission Opportunity fields
+    is_lso               = Column(Boolean, nullable=False, default=False)  # True if LSO
+    lso_slots            = Column(Integer, nullable=True)   # how many proposals UVA can submit
+    lso_internal_deadline= Column(String, nullable=True)    # internal competition deadline
+    lso_internal_status  = Column(String, nullable=True)    # Open / In Review / Awarded / Closed
+    lso_nominees         = Column(Text,   nullable=True)    # comma-separated nominee names (internal)
 
     # Detail
     description = Column(Text,   nullable=True)

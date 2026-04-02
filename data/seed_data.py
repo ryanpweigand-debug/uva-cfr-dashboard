@@ -291,16 +291,17 @@ def seed_recommendations(session):
 
 def seed_funding_opportunities(session):
     """
-    Sample funding opportunities drawn from 3 fictional listservs:
-      List A — OVPR Research Funding Digest
-      List B — Corporate Relations Opportunities Bulletin
-      List C — School of Engineering & Applied Science Grants Alert
+    Sample funding opportunities from real CFR source lists:
+      VPR Federal Digest (Lucy Carr Jones)  — federal opportunities from VPR's office
+      Limited Submissions (Matt Dooley)     — LSOs managed by Matt Dooley
+      CFR + School Research Directors       — opportunities from CFR and school-level directors
     """
-    opps = [
-        # (title, sponsor, deadline, amt_min_k, amt_max_k, source, areas, eligibility, opp_type, status, desc, url, notes)
+    # Regular (non-LSO) opportunities
+    # (title, sponsor, deadline, amt_min_k, amt_max_k, source, areas, eligibility, opp_type, status, desc, url, notes)
+    regular_opps = [
         ("NSF Convergence Accelerator — Track J: Food & Energy Nexus",
          "NSF", "2025-09-12", 750, 5000,
-         "List A — OVPR Digest",
+         "VPR Federal Digest (Lucy Carr Jones)",
          "Energy, Environment, Food Systems",
          "Faculty", "Grant", "Active",
          "Supports convergence research teams tackling real-world challenges at the food-energy nexus. "
@@ -309,7 +310,7 @@ def seed_funding_opportunities(session):
 
         ("NIH R01 — Alzheimer's Disease & Related Dementias",
          "NIH/NIA", "2025-10-05", 250, 500,
-         "List A — OVPR Digest",
+         "VPR Federal Digest (Lucy Carr Jones)",
          "Health, Neuroscience, Aging",
          "Faculty", "Grant", "Active",
          "Standard R01 mechanism for basic and translational research on ADRD. "
@@ -318,7 +319,7 @@ def seed_funding_opportunities(session):
 
         ("DARPA Young Faculty Award (YFA) — Open Broad Agency Announcement",
          "DARPA", "2025-08-30", 500, 1000,
-         "List A — OVPR Digest",
+         "VPR Federal Digest (Lucy Carr Jones)",
          "Defense, AI, Engineering, Cybersecurity",
          "Faculty", "Grant", "Closing Soon",
          "Identifies and engages rising stars in junior faculty positions who are likely to make "
@@ -326,9 +327,54 @@ def seed_funding_opportunities(session):
          "Awards up to $1M over 2 years.",
          "https://www.darpa.mil/work-with-us/young-faculty-award", "Great match for SEAS faculty; deadline in 6 weeks"),
 
+        ("DOE Office of Science — Basic Energy Sciences Early Career Award",
+         "Dept. of Energy", "2025-09-26", 750, 750,
+         "VPR Federal Digest (Lucy Carr Jones)",
+         "Energy, Materials Science, Chemistry, Physics",
+         "Faculty", "Grant", "Closing Soon",
+         "Awards up to $750k over 5 years to early-career researchers at universities. "
+         "Focus on fundamental research in chemical sciences, geosciences, and energy biosciences.",
+         "https://science.osti.gov/early-career", "Priority for SEAS and A&S faculty in first 10 years of appointment"),
+
+        ("Robert Wood Johnson Foundation — Health Equity Research",
+         "RWJF", "2025-10-30", 500, 2000,
+         "VPR Federal Digest (Lucy Carr Jones)",
+         "Health, Health Equity, Social Sciences, Policy",
+         "Faculty", "Grant", "Active",
+         "Supports research that advances health equity and addresses systemic barriers to health. "
+         "Priority given to community-partnered research with measurable policy impact.",
+         "https://www.rwjf.org", "Cross-listed: also flagged by CFR + School Directors — deduplicated here"),
+
+        ("NSF CAREER Award — Faculty Early Career Development Program",
+         "NSF", "2026-02-20", 400, 600,
+         "VPR Federal Digest (Lucy Carr Jones)",
+         "All STEM fields",
+         "Faculty", "Grant", "Active",
+         "NSF's most prestigious award for early-career faculty. Supports research and education "
+         "activities in all NSF-supported disciplines. Must be in first 7 years of tenure-track appointment.",
+         "https://www.nsf.gov/career", "Perennial — remind RAs to track eligible faculty cohort each cycle"),
+
+        ("Commonwealth of Virginia — Innovation Commercialization Grant",
+         "VA CEED / VEDP", "2025-10-10", 50, 500,
+         "VPR Federal Digest (Lucy Carr Jones)",
+         "Commercialization, Entrepreneurship, Technology Transfer",
+         "Faculty", "Grant", "Active",
+         "Supports faculty-led technology commercialization with Virginia economic development impact. "
+         "Requires industry co-sponsorship letter. Preference for companies in Virginia.",
+         "https://www.vedp.org", "Dominion Energy and Capital One could serve as co-sponsors; flag to CFR"),
+
+        ("Wellcome Trust — Mental Health Research Priority Program",
+         "Wellcome Trust", "2026-01-15", 500, 5000,
+         "VPR Federal Digest (Lucy Carr Jones)",
+         "Health, Mental Health, Neuroscience, Global Health",
+         "Faculty", "Grant", "Active",
+         "Supports ambitious programmes that will transform understanding of mental health conditions "
+         "and develop new approaches to prevention and treatment. International collaborations welcome.",
+         "https://wellcome.org/grant-funding", "High value — flag to UVA Health, Psychiatry dept"),
+
         ("Siemens Foundation — STEM Education Research Grant",
          "Siemens Foundation", "2025-11-01", 100, 300,
-         "List B — Corporate Relations Bulletin",
+         "CFR + School Research Directors",
          "Education, STEM, Workforce",
          "Faculty", "Grant", "Active",
          "Supports applied research on STEM education pipeline, workforce development, "
@@ -337,7 +383,7 @@ def seed_funding_opportunities(session):
 
         ("Google Research Scholar Program",
          "Google", "2025-10-15", 60, 60,
-         "List B — Corporate Relations Bulletin",
+         "CFR + School Research Directors",
          "AI, Machine Learning, Computer Science, Data",
          "Faculty", "Grant", "Active",
          "Unrestricted gifts to support early-career faculty pursuing research in CS and related fields. "
@@ -347,7 +393,7 @@ def seed_funding_opportunities(session):
 
         ("Microsoft Research Outreach — Azure for Research Credits",
          "Microsoft", "2025-12-31", 20, 150,
-         "List B — Corporate Relations Bulletin",
+         "CFR + School Research Directors",
          "AI, Cloud Computing, Data Science, Health",
          "Faculty", "Grant", "Active",
          "Provides Azure compute credits and technical support for research projects. "
@@ -356,36 +402,18 @@ def seed_funding_opportunities(session):
          "https://www.microsoft.com/en-us/research/academic-program/microsoft-azure-for-research/",
          "Microsoft is an active partner — CFR can warm intro"),
 
-        ("DOE Office of Science — Basic Energy Sciences Early Career Award",
-         "Dept. of Energy", "2025-09-26", 750, 750,
-         "List C — SEAS Grants Alert",
-         "Energy, Materials Science, Chemistry, Physics",
-         "Faculty", "Grant", "Closing Soon",
-         "Awards up to $750k over 5 years to early-career researchers at universities. "
-         "Focus on fundamental research in chemical sciences, geosciences, and energy biosciences.",
-         "https://science.osti.gov/early-career", "Priority for SEAS and A&S faculty in first 10 years of appointment"),
-
         ("AFRL University Research Initiative — Autonomy & Human-Machine Teaming",
          "Air Force Research Lab", "2025-11-15", 300, 2000,
-         "List C — SEAS Grants Alert",
+         "CFR + School Research Directors",
          "Defense, AI, Autonomy, Engineering",
          "Faculty", "Contract", "Active",
          "Seeking proposals on autonomous systems research and human-machine teaming. "
          "Multi-year contracts ranging from $300k to $2M. Requires DoD security considerations.",
          "https://www.afrl.af.mil", "Aligns with Raytheon, Lockheed, Northrop Grumman partners; tag for defense-adjacent faculty"),
 
-        ("Robert Wood Johnson Foundation — Health Equity Research",
-         "RWJF", "2025-10-30", 500, 2000,
-         "List A — OVPR Digest",
-         "Health, Health Equity, Social Sciences, Policy",
-         "Faculty", "Grant", "Active",
-         "Supports research that advances health equity and addresses systemic barriers to health. "
-         "Priority given to community-partnered research with measurable policy impact.",
-         "https://www.rwjf.org", "Cross-list: appeared on List A and List B — deduplicated here"),
-
         ("Capital One Spark for Good — Data Science for Social Impact",
          "Capital One", "2025-09-01", 50, 200,
-         "List B — Corporate Relations Bulletin",
+         "CFR + School Research Directors",
          "Data Science, Finance, Social Impact, AI",
          "Faculty", "Grant", "Closing Soon",
          "Supports university-based data science research with measurable social impact. "
@@ -393,18 +421,9 @@ def seed_funding_opportunities(session):
          "https://www.capitalone.com/tech/machine-learning/",
          "Active Capital One corporate relationship — CFR intro available; deadline in <30 days"),
 
-        ("NSF CAREER Award — Faculty Early Career Development Program",
-         "NSF", "2026-02-20", 400, 600,
-         "List A — OVPR Digest",
-         "All STEM fields",
-         "Faculty", "Grant", "Active",
-         "NSF's most prestigious award for early-career faculty. Supports research and education "
-         "activities in all NSF-supported disciplines. Must be in first 7 years of tenure-track appointment.",
-         "https://www.nsf.gov/career", "Perennial — remind RAs to track eligible faculty cohort each cycle"),
-
         ("Pfizer Medical Research Grant Program",
          "Pfizer", "2025-12-15", 100, 500,
-         "List B — Corporate Relations Bulletin",
+         "CFR + School Research Directors",
          "Health, Pharma, Clinical Research, Oncology",
          "Faculty", "Grant", "Active",
          "Supports investigator-initiated research in areas aligned with Pfizer therapeutic priorities: "
@@ -412,36 +431,18 @@ def seed_funding_opportunities(session):
          "https://www.pfizer.com/science/research/grants",
          "Pfizer is an active CFR partner — relationship manager should flag to UVA Health faculty"),
 
-        ("Commonwealth of Virginia — Innovation Commercialization Grant",
-         "VA CEED / VEDP", "2025-10-10", 50, 500,
-         "List A — OVPR Digest",
-         "Commercialization, Entrepreneurship, Technology Transfer",
-         "Faculty", "Grant", "Active",
-         "Supports faculty-led technology commercialization with Virginia economic development impact. "
-         "Requires industry co-sponsorship letter. Preference for companies in Virginia.",
-         "https://www.vedp.org", "Dominion Energy and Capital One could serve as co-sponsors; flag to CFR"),
-
         ("Raytheon University Research Program — Quantum & Photonics",
          "Raytheon", "2025-11-30", 200, 800,
-         "List C — SEAS Grants Alert",
+         "CFR + School Research Directors",
          "Defense, Quantum Computing, Physics, Engineering",
          "Faculty", "Contract", "Active",
          "Raytheon Technologies Research Center funding for university partners in quantum sensing, "
          "quantum communications, and photonic systems. Proprietary research with IP negotiation.",
          "https://www.rtx.com/raytheon/what-we-do/technology/university-research",
          "Raytheon is active CFR partner — CFR relationship manager can facilitate direct intro to RTRC"),
-
-        ("Wellcome Trust — Mental Health Research Priority Program",
-         "Wellcome Trust", "2026-01-15", 500, 5000,
-         "List A — OVPR Digest",
-         "Health, Mental Health, Neuroscience, Global Health",
-         "Faculty", "Grant", "Active",
-         "Supports ambitious programmes that will transform understanding of mental health conditions "
-         "and develop new approaches to prevention and treatment. International collaborations welcome.",
-         "https://wellcome.org/grant-funding", "Appeared on List A only; high value — flag to UVA Health, Psychiatry dept"),
     ]
 
-    for o in opps:
+    for o in regular_opps:
         (title, sponsor, deadline, amt_min, amt_max, source, areas,
          eligibility, opp_type, status, desc, url, notes) = o
         session.add(FundingOpportunity(
@@ -451,6 +452,61 @@ def seed_funding_opportunities(session):
             opp_type=opp_type, status=status, description=desc,
             url=url, notes=notes, added_by="CFR Seed Data",
             date_added="2025-07-01",
+            is_lso=False,
+        ))
+
+    # LSO — Limited Submission Opportunities (managed by Matt Dooley)
+    lso_opps = [
+        # (title, sponsor, deadline, amt_min_k, amt_max_k, areas, eligibility, status, desc, url, notes,
+        #  lso_slots, lso_internal_deadline, lso_internal_status, lso_nominees)
+        ("NSF Major Research Instrumentation (MRI) — Track 1",
+         "NSF", "2026-01-15", 400, 1600,
+         "Infrastructure, Engineering, Physical Sciences, Neuroscience",
+         "Faculty", "Active",
+         "Supports acquisition or development of multi-user research instrumentation critical to the "
+         "advancement of science and engineering. Track 1: up to $1.6M. UVA limited to 3 proposals "
+         "institution-wide (max 2 from SEAS).",
+         "https://www.nsf.gov/mri",
+         "Internal competition open — contact Matt Dooley to submit intent by internal deadline",
+         3, "2025-11-01", "Open", ""),
+
+        ("NIH S10 — Shared Instrumentation Grant",
+         "NIH/ORIP", "2025-11-05", 500, 2000,
+         "Health, Biomedical Research, Instrumentation",
+         "Faculty", "Active",
+         "Supports purchase of commercially available, state-of-the-art instruments to be shared by "
+         "NIH-supported investigators. UVA may submit 1 application. Award range $500k–$2M. "
+         "Requires endorsement from Department Chair and Dean.",
+         "https://grants.nih.gov/grants/guide/pa-files/PAR-23-177.html",
+         "UVA slot: 1 — internal review underway; nominees identified",
+         1, "2025-09-15", "In Review", "Dr. Sarah Chen (Neuroscience), Dr. Mark Torres (Biomedical Eng)"),
+
+        ("Simons Foundation — Investigators in Mathematical Modeling of Living Systems",
+         "Simons Foundation", "2026-03-01", 500, 500,
+         "Mathematics, Biology, Computational Biology, Physics",
+         "Faculty", "Active",
+         "Five-year, $100k/yr awards to mid-career faculty doing exceptional research at the interface "
+         "of mathematics and living systems. UVA limited to 2 nominations. Highly competitive nationally.",
+         "https://www.simonsfoundation.org/grant/simons-investigators/",
+         "UVA nominations must go through VPR office — coordinate with Matt Dooley and Lucy Carr Jones",
+         2, "2025-12-01", "Open", ""),
+    ]
+
+    for o in lso_opps:
+        (title, sponsor, deadline, amt_min, amt_max, areas, eligibility, status,
+         desc, url, notes, slots, int_deadline, int_status, nominees) = o
+        session.add(FundingOpportunity(
+            title=title, sponsor=sponsor, deadline=deadline,
+            amount_min_k=float(amt_min), amount_max_k=float(amt_max),
+            source="Limited Submissions (Matt Dooley)",
+            research_areas=areas, eligibility=eligibility,
+            opp_type="LSO", status=status, description=desc,
+            url=url, notes=notes, added_by="CFR Seed Data",
+            date_added="2025-07-01",
+            is_lso=True, lso_slots=slots,
+            lso_internal_deadline=int_deadline,
+            lso_internal_status=int_status,
+            lso_nominees=nominees,
         ))
 
 

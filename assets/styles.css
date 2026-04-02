@@ -841,3 +841,53 @@ body {
   background: var(--uva-orange) !important;
   border-color: var(--uva-orange) !important;
 }
+
+/* ── LSO — Limited Submission Opportunity ────────────────────────────────── */
+.lso-badge {
+  display: inline-block;
+  background: #C62828;
+  color: #fff;
+  font-size: 0.60rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.lso-tracking-block {
+  background: rgba(198, 40, 40, 0.04);
+  border-left: 3px solid #C62828;
+  padding: 8px 12px;
+  border-radius: 0 4px 4px 0;
+  margin-top: 8px;
+}
+
+.lso-tracking-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #C62828;
+  margin-bottom: 4px;
+}
+
+.lso-tracking-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.78rem;
+  color: var(--text-mid);
+}
+
+.lso-tracking-item strong {
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+.lso-status-open        { color: #1565C0; font-weight: 700; }
+.lso-status-in-review   { color: #E57200; font-weight: 700; }
+.lso-status-awarded     { color: #2E7D32; font-weight: 700; }
+.lso-status-closed      { color: #8492A6; font-weight: 700; }

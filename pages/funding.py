@@ -34,14 +34,15 @@ dash.register_page(__name__, path="/funding", name="Funding Opportunities", orde
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 STATUS_OPTIONS  = ["All", "Active", "Closing Soon", "Expired", "Archived"]
-TYPE_OPTIONS    = ["All", "Grant", "Contract", "Fellowship", "RFP"]
+TYPE_OPTIONS    = ["All", "Grant", "Contract", "Fellowship", "RFP", "LSO"]
 SOURCE_OPTIONS  = [
     "All",
-    "List A — OVPR Digest",
-    "List B — Corporate Relations Bulletin",
-    "List C — SEAS Grants Alert",
+    "VPR Federal Digest (Lucy Carr Jones)",
+    "Limited Submissions (Matt Dooley)",
+    "CFR + School Research Directors",
     "Other",
 ]
+LSO_STATUS_OPTIONS = ["Open", "In Review", "Awarded", "Closed"]
 AREA_OPTIONS = [
     "All", "AI", "Aging", "Autonomy", "Chemistry", "Cybersecurity",
     "Cloud Computing", "Commercialization", "Data Science", "Defense",
@@ -90,11 +91,12 @@ def days_until(deadline_str):
 # ── KPI strip ────────────────────────────────────────────────────────────────
 def kpi_strip(df):
     kpis = funding_summary_kpis(df)
+    lso_count = int(df["is_lso"].sum()) if "is_lso" in df.columns else 0
     cards = [
-        (str(kpis["total"]),             "Total Opportunities",  "across all 3 lists",    UVA_NAVY),
+        (str(kpis["total"]),             "Total Opportunities",  "across all 3 sources",  UVA_NAVY),
         (str(kpis["active"]),            "Active",               "open for applications", "#2E7D32"),
         (str(kpis["closing_soon"]),      "Closing Soon",         "within 30 days",        UVA_ORANGE),
-        (str(kpis["sources"]),           "Source Lists",         "consolidated here",     "#1565C0"),
+        (str(lso_count),                 "Limited Submissions",  "require internal comp.", "#C62828"),
         (f"${kpis['total_max_m']:.0f}M", "Max Potential Funding","if all awarded",        "#7B1FA2"),
     ]
     return dbc.Row([
@@ -167,6 +169,43 @@ def deadline_timeline(df):
     return fig
 
 
+# ── LSO badge ────────────────────────────────────────────────────────────────
+def lso_badge():
+    return html.Span("LIMITED SUBMISSION", className="lso-badge")
+
+
+# ── LSO internal competition block ────────────────────────────────────────────
+def lso_block(row):
+    slots     = row.get("lso_slots") or "?"
+    int_ddl   = row.get("lso_internal_deadline") or "TBD"
+    int_status= row.get("lso_internal_status") or "Open"
+    nominees  = row.get("lso_nominees") or ""
+    status_color = {
+        "Open":      "#2E7D32",
+        "In Review": "#E57200",
+        "Awarded":   "#1565C0",
+        "Closed":    "#78909C",
+    }.get(int_status, "#999")
+
+    return html.Div([
+        html.Div("INTERNAL COMPETITION TRACKING", className="section-eyebrow mb-1"),
+        html.Div([
+            html.Span([html.Strong("UVA Slots: "), f"{slots}"],
+                      style={"marginRight": "20px", "fontSize": "0.82rem"}),
+            html.Span([html.Strong("Internal Deadline: "), int_ddl],
+                      style={"marginRight": "20px", "fontSize": "0.82rem"}),
+            html.Span([html.Strong("Status: ")],
+                      style={"fontSize": "0.82rem", "marginRight": "4px"}),
+            html.Span(int_status, style={
+                "color": status_color, "fontWeight": "700", "fontSize": "0.82rem",
+                "marginRight": "20px",
+            }),
+            html.Span([html.Strong("Nominees: "), nominees or "None yet"],
+                      style={"fontSize": "0.82rem", "color": TEXT_MID}),
+        ]),
+    ], className="lso-tracking-block mt-2")
+
+
 # ── Opportunity card (expanded detail) ───────────────────────────────────────
 def opp_card(row):
     days_txt, days_color = days_until(row.get("deadline", ""))
@@ -178,6 +217,8 @@ def opp_card(row):
         amt_str = (f"${amt_min/1000:.1f}M – ${amt_max/1000:.1f}M"
                    if amt_min != amt_max else f"${amt_max/1000:.1f}M")
 
+    is_lso = bool(row.get("is_lso", False))
+
     area_tags = [
         html.Span(a.strip(), className="funding-area-tag")
         for a in str(row.get("research_areas", "")).split(",") if a.strip()
@@ -187,11 +228,18 @@ def opp_card(row):
     url_link = html.A("View Full RFP →", href=url, target="_blank",
                       className="funding-rfp-link") if url else html.Span()
 
+    # Source display: show the owner name in parentheses
+    source_raw = row.get("source", "") or ""
+    source_display = source_raw.split("(")[-1].rstrip(")") if "(" in source_raw else source_raw
+
     return html.Div([
         # Header row
         html.Div([
             html.Div([
-                html.Div(row.get("title", ""), className="funding-card-title"),
+                html.Div([
+                    row.get("title", ""),
+                    lso_badge() if is_lso else html.Span(),
+                ], className="funding-card-title d-flex align-items-center gap-2"),
                 html.Div(row.get("sponsor", ""), className="funding-card-sponsor"),
             ], className="flex-grow-1"),
             html.Div([
@@ -210,18 +258,19 @@ def opp_card(row):
                                        "fontSize": "0.82rem", "marginRight": "18px"}),
             html.Span([html.Strong("Award: "), amt_str],
                       style={"marginRight": "18px", "fontSize": "0.82rem"}),
-            html.Span([html.Strong("Source: "),
-                       row.get("source", "—").split("—")[-1].strip()
-                       if "—" in str(row.get("source","")) else row.get("source","—")],
+            html.Span([html.Strong("Via: "), source_display],
                       style={"fontSize": "0.82rem", "color": TEXT_MID}),
         ], className="mb-2"),
 
         # Research area tags
         html.Div(area_tags, className="funding-area-row mb-2") if area_tags else html.Span(),
 
+        # LSO internal competition block (only for LSOs)
+        lso_block(row) if is_lso else html.Span(),
+
         # Description
         html.Div(str(row.get("description", ""))[:400] + ("…" if len(str(row.get("description",""))) > 400 else ""),
-                 className="funding-card-desc"),
+                 className="funding-card-desc mt-2"),
 
         # CFR Notes
         html.Div([html.Strong("CFR Notes: "),
@@ -268,10 +317,10 @@ add_form = dbc.Collapse(
                 dbc.Input(id="fn-amt-max", type="number", placeholder="500", className="cfr-input"),
             ], md=2),
             dbc.Col([
-                dbc.Label("Source List", className="dropdown-label"),
+                dbc.Label("Source / Owner", className="dropdown-label"),
                 dcc.Dropdown(id="fn-source",
                              options=[{"label": s, "value": s} for s in SOURCE_OPTIONS[1:]],
-                             value="List A — OVPR Digest", clearable=False, className="cfr-dropdown"),
+                             value="VPR Federal Digest (Lucy Carr Jones)", clearable=False, className="cfr-dropdown"),
             ], md=3),
             dbc.Col([
                 dbc.Label("Status", className="dropdown-label"),
@@ -305,6 +354,40 @@ add_form = dbc.Collapse(
                 dbc.Label("CFR Staff Notes", className="dropdown-label"),
                 dbc.Textarea(id="fn-notes", placeholder="Internal notes, partner connections, flags…",
                              rows=3, className="cfr-input"),
+            ], md=4),
+        ], className="mb-3"),
+        # LSO fields (shown always — staff fills in only if LSO)
+        html.Hr(style={"borderColor": "#DEE2E6", "margin": "8px 0 12px"}),
+        html.Div("LIMITED SUBMISSION FIELDS (fill in only if this is an LSO)",
+                 className="section-eyebrow mb-2"),
+        dbc.Row([
+            dbc.Col([
+                dbc.Label("Is Limited Submission?", className="dropdown-label"),
+                dcc.Dropdown(id="fn-is-lso",
+                             options=[{"label": "No", "value": "no"},
+                                      {"label": "Yes — LSO", "value": "yes"}],
+                             value="no", clearable=False, className="cfr-dropdown"),
+            ], md=2),
+            dbc.Col([
+                dbc.Label("UVA Submission Slots", className="dropdown-label"),
+                dbc.Input(id="fn-lso-slots", type="number", placeholder="e.g. 2",
+                          className="cfr-input"),
+            ], md=2),
+            dbc.Col([
+                dbc.Label("Internal Deadline (YYYY-MM-DD)", className="dropdown-label"),
+                dbc.Input(id="fn-lso-int-deadline", placeholder="2025-08-01",
+                          className="cfr-input"),
+            ], md=2),
+            dbc.Col([
+                dbc.Label("Internal Status", className="dropdown-label"),
+                dcc.Dropdown(id="fn-lso-int-status",
+                             options=[{"label": s, "value": s} for s in LSO_STATUS_OPTIONS],
+                             value="Open", clearable=False, className="cfr-dropdown"),
+            ], md=2),
+            dbc.Col([
+                dbc.Label("Current Nominees (comma-separated)", className="dropdown-label"),
+                dbc.Input(id="fn-lso-nominees", placeholder="PI Name, PI Name…",
+                          className="cfr-input"),
             ], md=4),
         ], className="mb-3"),
         dbc.Row([
@@ -355,7 +438,7 @@ layout = html.Div([
         dbc.Col([
             dbc.Label("Source List", className="dropdown-label"),
             dcc.Dropdown(id="fn-filter-source",
-                         options=[{"label": s.split("—")[-1].strip() if "—" in s else s,
+                         options=[{"label": s.split("(")[-1].rstrip(")") if "(" in s else s,
                                    "value": s} for s in SOURCE_OPTIONS],
                          value="All", clearable=False, className="cfr-dropdown"),
         ], md=3),
@@ -366,7 +449,7 @@ layout = html.Div([
                          value="All", clearable=False, className="cfr-dropdown"),
         ], md=2),
         dbc.Col([
-            dbc.Label("Type", className="dropdown-label"),
+            dbc.Label("Type / LSO", className="dropdown-label"),
             dcc.Dropdown(id="fn-filter-type",
                          options=[{"label": t, "value": t} for t in TYPE_OPTIONS],
                          value="All", clearable=False, className="cfr-dropdown"),
@@ -470,39 +553,52 @@ def update_funding(source, status, opp_type, area, sort_by, _add_click):
 
 
 @callback(
-    Output("fn-submit-msg", "children"),
-    Output("fn-submit-msg", "style"),
-    Input("fn-submit-btn", "n_clicks"),
-    State("fn-title",      "value"),
-    State("fn-sponsor",    "value"),
-    State("fn-type",       "value"),
-    State("fn-deadline",   "value"),
-    State("fn-amt-min",    "value"),
-    State("fn-amt-max",    "value"),
-    State("fn-source",     "value"),
-    State("fn-status",     "value"),
-    State("fn-areas",      "value"),
-    State("fn-eligibility","value"),
-    State("fn-url",        "value"),
-    State("fn-desc",       "value"),
-    State("fn-notes",      "value"),
-    State("fn-added-by",   "value"),
+    Output("fn-submit-msg",    "children"),
+    Output("fn-submit-msg",    "style"),
+    Input("fn-submit-btn",     "n_clicks"),
+    State("fn-title",          "value"),
+    State("fn-sponsor",        "value"),
+    State("fn-type",           "value"),
+    State("fn-deadline",       "value"),
+    State("fn-amt-min",        "value"),
+    State("fn-amt-max",        "value"),
+    State("fn-source",         "value"),
+    State("fn-status",         "value"),
+    State("fn-areas",          "value"),
+    State("fn-eligibility",    "value"),
+    State("fn-url",            "value"),
+    State("fn-desc",           "value"),
+    State("fn-notes",          "value"),
+    State("fn-added-by",       "value"),
+    State("fn-is-lso",         "value"),
+    State("fn-lso-slots",      "value"),
+    State("fn-lso-int-deadline","value"),
+    State("fn-lso-int-status", "value"),
+    State("fn-lso-nominees",   "value"),
     prevent_initial_call=True,
 )
 def submit_opportunity(n_clicks, title, sponsor, opp_type, deadline,
                        amt_min, amt_max, source, status, areas,
-                       eligibility, url, desc, notes, added_by):
+                       eligibility, url, desc, notes, added_by,
+                       is_lso, lso_slots, lso_int_dl, lso_int_status, lso_nominees):
     if not title or not sponsor:
         return "⚠️ Title and Sponsor are required.", {"color": UVA_ORANGE, "fontSize": "0.85rem"}
 
+    lso_flag = (is_lso == "yes")
     data = {
         "title": title, "sponsor": sponsor, "opp_type": opp_type,
         "deadline": deadline, "amount_min_k": float(amt_min or 0),
         "amount_max_k": float(amt_max or 0), "source": source,
         "status": status, "research_areas": areas, "eligibility": eligibility,
         "url": url, "description": desc, "notes": notes, "added_by": added_by,
+        "is_lso": lso_flag,
+        "lso_slots": int(lso_slots) if lso_slots and lso_flag else None,
+        "lso_internal_deadline": lso_int_dl if lso_flag else None,
+        "lso_internal_status": lso_int_status if lso_flag else None,
+        "lso_nominees": lso_nominees if lso_flag else None,
     }
     ok = add_funding_opportunity(data)
     if ok:
-        return f"✅ '{title}' added successfully.", {"color": "#2E7D32", "fontSize": "0.85rem"}
+        lso_note = " [LSO]" if lso_flag else ""
+        return f"✅ '{title}'{lso_note} added successfully.", {"color": "#2E7D32", "fontSize": "0.85rem"}
     return "❌ Error saving. Check logs.", {"color": "#C62828", "fontSize": "0.85rem"}
