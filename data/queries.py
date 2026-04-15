@@ -18,7 +18,7 @@ RELATIONSHIP_METRICS = [
     ("sponsored_research_5yr",    "Sponsored Research (5yr)",    18),
     ("sponsored_research_alltime","Sponsored Research (All-Time)", 7),
     ("philanthropy_5yr",          "Philanthropy (5yr)",           14),
-    ("philanthropy_alltime",      "Philanthropy (All-Time)",       6),
+    ("procurement_score",         "Procurement",                   6),
     ("research_footprint",        "Research Footprint",           10),
     ("legal_activity",            "Legal / On-Ramp Activity",      5),
     ("talent_pipeline",           "Talent Pipeline",               5),
@@ -94,7 +94,7 @@ def compute_judgment_scores(df: pd.DataFrame) -> pd.DataFrame:
     points = (rating / 10) * max_points
     """
     QUALITATIVE = {"engagement_depth", "strategic_fit", "growth_greenfield",
-                   "access_influence", "feasibility_timing"}
+                   "access_influence", "feasibility_timing", "procurement_score"}
     scored = df.copy()
     for col, _, max_pts in ALL_METRICS:
         if col in QUALITATIVE:
@@ -167,7 +167,7 @@ def compute_dual_scores(df: pd.DataFrame, method: str = "percentile") -> pd.Data
 
     if method == "judgment":
         QUALITATIVE = {"engagement_depth", "strategic_fit", "growth_greenfield",
-                       "access_influence", "feasibility_timing"}
+                       "access_influence", "feasibility_timing", "procurement_score"}
         for col, _, max_pts in ALL_METRICS:
             if col in QUALITATIVE:
                 rating = scored[col]

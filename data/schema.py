@@ -32,7 +32,7 @@ class Partner(Base):
     sponsored_research_5yr    = Column(Float, nullable=False, default=0)  # $ last 5 FYs
     sponsored_research_alltime= Column(Float, nullable=False, default=0)  # $ all-time
     philanthropy_5yr          = Column(Float, nullable=False, default=0)  # $ last 5 FYs
-    philanthropy_alltime      = Column(Float, nullable=False, default=0)  # $ all-time
+    procurement_score         = Column(Float, nullable=False, default=0)  # 0-10 holistic procurement value
     research_footprint        = Column(Float, nullable=False, default=0)  # active project count
     legal_activity            = Column(Float, nullable=False, default=0)  # NDA/MTA/IP count
     talent_pipeline           = Column(Float, nullable=False, default=0)  # hires+interns/yr
