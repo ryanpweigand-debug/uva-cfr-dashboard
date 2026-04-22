@@ -18,6 +18,7 @@ from queries import (
     RELATIONSHIP_METRICS, STRATEGIC_METRICS, ALL_METRICS,
     PARTNER_TIERS, TIER_COLORS, SECTOR_COLORS, get_tier,
     CORPORATE_SECTORS, FOUNDATION_SECTORS,
+    PRIORITY_FOUNDATIONS,
 )
 from charts import (
     UVA_NAVY, UVA_ORANGE, LIGHT_BG, CARD_BG, TEXT_DARK, TEXT_MID, TEXT_LIGHT,
@@ -35,6 +36,118 @@ _TAB  = dict(backgroundColor="transparent", border="none",
              padding="12px 24px")
 _TSEL = {**_TAB, "color": UVA_NAVY,
          "borderBottom": f"3px solid {UVA_ORANGE}", "fontWeight": "700"}
+
+
+# ── CFR Priority Foundation Watch Panel ───────────────────────────────────────
+def scoring_priority_watch(scored_df):
+    """
+    Compact priority watch strip for the Partner Scoring Foundation tab.
+    Shows tier badge for active foundations; dashed for prospects.
+    """
+    active_names = set(scored_df["name"].str.strip().str.lower())
+
+    badges = []
+    for name in PRIORITY_FOUNDATIONS:
+        is_active = name.strip().lower() in active_names
+        if is_active:
+            row = scored_df[scored_df["name"].str.strip().str.lower() == name.strip().lower()].iloc[0]
+            score = row["composite_score"]
+            tier  = row["tier"]
+            color = row["tier_color"]
+            short = name.split()[-1] if len(name) > 22 else name  # last word as abbreviation
+            badge = html.Div([
+                html.Div(name, style={
+                    "fontWeight": "700", "fontSize": "0.7rem",
+                    "color": UVA_NAVY, "lineHeight": "1.2",
+                    "marginBottom": "5px",
+                    "whiteSpace": "nowrap", "overflow": "hidden",
+                    "textOverflow": "ellipsis",
+                }),
+                html.Div([
+                    html.Span(tier, style={
+                        "background": color, "color": "#fff",
+                        "fontSize": "0.58rem", "fontWeight": "700",
+                        "padding": "1px 6px", "borderRadius": "3px",
+                        "marginRight": "5px",
+                    }),
+                    html.Span(f"{score:.0f}pt", style={
+                        "fontSize": "0.68rem", "color": color, "fontWeight": "700",
+                    }),
+                ], style={"display": "flex", "alignItems": "center"}),
+            ], style={
+                "border": f"1px solid {color}",
+                "borderTop": f"3px solid {color}",
+                "borderRadius": "6px",
+                "padding": "8px 12px",
+                "background": CARD_BG,
+                "minWidth": "140px",
+                "maxWidth": "200px",
+                "flex": "1",
+            })
+        else:
+            badge = html.Div([
+                html.Div(name, style={
+                    "fontWeight": "600", "fontSize": "0.7rem",
+                    "color": TEXT_MID, "lineHeight": "1.2",
+                    "marginBottom": "5px",
+                    "whiteSpace": "nowrap", "overflow": "hidden",
+                    "textOverflow": "ellipsis",
+                }),
+                html.Div("Prospect", style={
+                    "fontSize": "0.62rem", "color": TEXT_LIGHT, "fontStyle": "italic",
+                }),
+            ], style={
+                "border": f"1px dashed {BORDER}",
+                "borderTop": f"3px dashed {BORDER}",
+                "borderRadius": "6px",
+                "padding": "8px 12px",
+                "background": LIGHT_BG,
+                "minWidth": "140px",
+                "maxWidth": "200px",
+                "flex": "1",
+                "opacity": "0.7",
+            })
+        badges.append(badge)
+
+    active_ct  = sum(1 for n in PRIORITY_FOUNDATIONS if n.strip().lower() in active_names)
+    prospect_ct = len(PRIORITY_FOUNDATIONS) - active_ct
+
+    return html.Div([
+        html.Div([
+            html.Div([
+                html.Span("★", style={"color": UVA_ORANGE, "marginRight": "6px",
+                                      "fontSize": "0.9rem"}),
+                html.Span("CFR PRIORITY FOUNDATION WATCH", style={
+                    "fontFamily": "var(--font-brand)", "fontWeight": "800",
+                    "fontSize": "0.72rem", "color": UVA_NAVY, "letterSpacing": "0.08em",
+                }),
+            ], style={"display": "flex", "alignItems": "center"}),
+            html.Div([
+                html.Span(f"{active_ct} active", style={
+                    "fontSize": "0.7rem", "color": "#2E7D32",
+                    "fontWeight": "700", "marginRight": "10px",
+                }),
+                html.Span(f"{prospect_ct} prospects", style={
+                    "fontSize": "0.7rem", "color": TEXT_MID, "fontWeight": "600",
+                }),
+            ]),
+        ], style={"display": "flex", "justifyContent": "space-between",
+                  "alignItems": "center", "marginBottom": "12px"}),
+        html.Div(badges, style={
+            "display": "flex", "flexWrap": "wrap", "gap": "8px",
+        }),
+        html.Div(
+            "Dashed gray = priority foundation not yet in active pipeline.",
+            style={"fontSize": "0.63rem", "color": TEXT_LIGHT,
+                   "marginTop": "8px", "fontStyle": "italic"},
+        ),
+    ], style={
+        "background": "linear-gradient(135deg, rgba(35,45,75,0.03) 0%, rgba(229,114,0,0.03) 100%)",
+        "border": f"1px solid {BORDER}",
+        "borderRadius": "10px",
+        "padding": "16px 20px",
+        "marginBottom": "20px",
+    })
 
 
 # ── Ranking bar chart ─────────────────────────────────────────────────────────
@@ -294,6 +407,9 @@ layout = html.Div([
         ],
     ),
 
+    # ── Priority Foundation Watch (Foundation tab only) ────────────────────────
+    html.Div(id="scoring-priority-watch"),
+
     # ── Filters ──────────────────────────────────────────────────────────────
     dbc.Row([
         dbc.Col([
@@ -384,6 +500,7 @@ def _reset_scoring_sector(tab, cur):
 
 
 @callback(
+    Output("scoring-priority-watch", "children"),
     Output("rankings-bar",       "figure"),
     Output("stacked-breakdown",  "figure"),
     Output("metric-heatmap",     "figure"),
@@ -395,9 +512,11 @@ def _reset_scoring_sector(tab, cur):
 )
 def update_charts(method, sector, tier, tab):
     scored = load_scored_partners(method, tab)
+    watch  = scoring_priority_watch(scored) if tab == "Foundation" else html.Span()
     partner_opts = [{"label": f"#{int(r['rank'])} {r['name']}", "value": r['name']}
                     for _, r in scored.sort_values("rank").iterrows()]
     return (
+        watch,
         rankings_bar(scored, sector, tier),
         stacked_breakdown(scored, sector, tier),
         metric_heatmap(scored, sector),

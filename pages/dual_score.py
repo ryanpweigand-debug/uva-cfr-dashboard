@@ -29,6 +29,7 @@ from queries import (
     RELATIONSHIP_METRICS, STRATEGIC_METRICS,
     SECTOR_COLORS, DUAL_PARTNER_TYPES,
     CORPORATE_SECTORS, FOUNDATION_SECTORS,
+    PRIORITY_FOUNDATIONS,
 )
 from charts import (
     UVA_NAVY, UVA_ORANGE, LIGHT_BG, CARD_BG, TEXT_DARK, TEXT_MID,
@@ -49,6 +50,148 @@ _TAB  = dict(backgroundColor="transparent", border="none",
              padding="12px 24px")
 _TSEL = {**_TAB, "color": UVA_NAVY,
          "borderBottom": f"3px solid {UVA_ORANGE}", "fontWeight": "700"}
+
+
+# ── 0. CFR Priority Foundation Watch Panel ────────────────────────────────────
+def priority_watch_panel(df_dual):
+    """
+    Always-visible panel on Foundation tab showing all 16 UVA priority foundations.
+    Green badge = active in DB with scores; gray dashed = prospect not yet tracked.
+    """
+    active_names = set(df_dual["name"].str.strip().str.lower())
+
+    badges = []
+    for name in PRIORITY_FOUNDATIONS:
+        is_active = name.strip().lower() in active_names
+        if is_active:
+            row = df_dual[df_dual["name"].str.strip().str.lower() == name.strip().lower()].iloc[0]
+            rsi_pct = row["rsi_pct"]
+            soi_pct = row["soi_pct"]
+            dtype   = row["dual_type"]
+            dcolor  = row["dual_color"]
+            dicon   = row["dual_icon"]
+            badge = html.Div([
+                html.Div([
+                    html.Span(dicon, style={"fontSize": "0.75rem", "marginRight": "4px"}),
+                    html.Span(name, style={
+                        "fontWeight": "700", "fontSize": "0.72rem",
+                        "color": UVA_NAVY, "lineHeight": "1.2",
+                    }),
+                ], style={"display": "flex", "alignItems": "flex-start",
+                          "marginBottom": "5px", "flexWrap": "wrap"}),
+                html.Div([
+                    html.Span("RSI", style={"fontSize": "0.6rem", "color": TEXT_LIGHT,
+                                            "fontWeight": "700", "marginRight": "3px",
+                                            "letterSpacing": "0.05em"}),
+                    html.Div(
+                        html.Div(style={"width": f"{max(rsi_pct, 3):.1f}%", "height": "100%",
+                                        "background": UVA_NAVY, "borderRadius": "2px"}),
+                        style={"flex": "1", "height": "5px", "background": "rgba(0,0,0,0.08)",
+                               "borderRadius": "2px", "overflow": "hidden"},
+                    ),
+                    html.Span(f"{rsi_pct:.0f}%", style={"fontSize": "0.62rem",
+                                                         "color": UVA_NAVY, "fontWeight": "700",
+                                                         "marginLeft": "4px", "flexShrink": "0"}),
+                ], style={"display": "flex", "alignItems": "center", "gap": "3px",
+                          "marginBottom": "3px"}),
+                html.Div([
+                    html.Span("SOI", style={"fontSize": "0.6rem", "color": TEXT_LIGHT,
+                                            "fontWeight": "700", "marginRight": "3px",
+                                            "letterSpacing": "0.05em"}),
+                    html.Div(
+                        html.Div(style={"width": f"{max(soi_pct, 3):.1f}%", "height": "100%",
+                                        "background": UVA_ORANGE, "borderRadius": "2px"}),
+                        style={"flex": "1", "height": "5px", "background": "rgba(0,0,0,0.08)",
+                               "borderRadius": "2px", "overflow": "hidden"},
+                    ),
+                    html.Span(f"{soi_pct:.0f}%", style={"fontSize": "0.62rem",
+                                                          "color": UVA_ORANGE, "fontWeight": "700",
+                                                          "marginLeft": "4px", "flexShrink": "0"}),
+                ], style={"display": "flex", "alignItems": "center", "gap": "3px"}),
+                html.Div(dtype, style={
+                    "fontSize": "0.58rem", "color": dcolor, "fontWeight": "700",
+                    "marginTop": "5px", "letterSpacing": "0.04em", "textTransform": "uppercase",
+                }),
+            ], style={
+                "border": f"1px solid {dcolor}",
+                "borderTop": f"3px solid {dcolor}",
+                "borderRadius": "6px",
+                "padding": "10px 12px",
+                "background": CARD_BG,
+                "minWidth": "160px",
+                "maxWidth": "220px",
+                "flex": "1",
+                "cursor": "default",
+            })
+        else:
+            badge = html.Div([
+                html.Div([
+                    html.Span("○", style={"fontSize": "0.75rem", "marginRight": "4px",
+                                          "color": TEXT_LIGHT}),
+                    html.Span(name, style={
+                        "fontWeight": "600", "fontSize": "0.72rem",
+                        "color": TEXT_MID, "lineHeight": "1.2",
+                    }),
+                ], style={"display": "flex", "alignItems": "flex-start",
+                          "marginBottom": "6px", "flexWrap": "wrap"}),
+                html.Div("Prospect — not yet tracked", style={
+                    "fontSize": "0.62rem", "color": TEXT_LIGHT,
+                    "fontStyle": "italic",
+                }),
+            ], style={
+                "border": f"1px dashed {BORDER}",
+                "borderTop": f"3px dashed {BORDER}",
+                "borderRadius": "6px",
+                "padding": "10px 12px",
+                "background": LIGHT_BG,
+                "minWidth": "160px",
+                "maxWidth": "220px",
+                "flex": "1",
+                "opacity": "0.75",
+                "cursor": "default",
+            })
+        badges.append(badge)
+
+    active_ct  = sum(1 for n in PRIORITY_FOUNDATIONS if n.strip().lower() in active_names)
+    prospect_ct = len(PRIORITY_FOUNDATIONS) - active_ct
+
+    return html.Div([
+        html.Div([
+            html.Div([
+                html.Span("★", style={"color": UVA_ORANGE, "marginRight": "6px",
+                                      "fontSize": "0.9rem"}),
+                html.Span("CFR PRIORITY FOUNDATION WATCH", style={
+                    "fontFamily": "var(--font-brand)", "fontWeight": "800",
+                    "fontSize": "0.72rem", "color": UVA_NAVY, "letterSpacing": "0.08em",
+                }),
+            ], style={"display": "flex", "alignItems": "center"}),
+            html.Div([
+                html.Span(f"{active_ct} active", style={
+                    "fontSize": "0.7rem", "color": "#2E7D32",
+                    "fontWeight": "700", "marginRight": "10px",
+                }),
+                html.Span(f"{prospect_ct} prospects", style={
+                    "fontSize": "0.7rem", "color": TEXT_MID, "fontWeight": "600",
+                }),
+            ]),
+        ], style={"display": "flex", "justifyContent": "space-between",
+                  "alignItems": "center", "marginBottom": "12px"}),
+        html.Div(badges, style={
+            "display": "flex", "flexWrap": "wrap", "gap": "10px",
+        }),
+        html.Div(
+            "Priority foundations are always shown regardless of current scoring rank. "
+            "Dashed gray = prospect not yet in active pipeline.",
+            style={"fontSize": "0.65rem", "color": TEXT_LIGHT,
+                   "marginTop": "10px", "fontStyle": "italic"},
+        ),
+    ], style={
+        "background": "linear-gradient(135deg, rgba(35,45,75,0.03) 0%, rgba(229,114,0,0.03) 100%)",
+        "border": f"1px solid {BORDER}",
+        "borderRadius": "10px",
+        "padding": "16px 20px",
+        "marginBottom": "20px",
+    })
 
 
 # ── 1. Theory explainer cards ─────────────────────────────────────────────────
@@ -353,6 +496,9 @@ layout = html.Div([
         ],
     ),
 
+    # ── Priority Foundation Watch (Foundation tab only) ────────────────────────
+    html.Div(id="dual-priority-watch"),
+
     # ── Filters ───────────────────────────────────────────────────────────────
     dbc.Row([
         dbc.Col([
@@ -443,6 +589,7 @@ def _reset_dual_sector(tab, cur):
 
 
 @callback(
+    Output("dual-priority-watch", "children"),
     Output("dual-kpi-row",   "children"),
     Output("dual-quadrant",  "figure"),
     Output("dual-donut",     "figure"),
@@ -455,6 +602,9 @@ def _reset_dual_sector(tab, cur):
 def update_dual(method, sector, tab):
     df = load_dual_scored_partners(method, tab)
     df_filt = df if sector == "All" else df[df["sector"] == sector]
+
+    # Priority watch panel — only on Foundation tab
+    watch = priority_watch_panel(df) if tab == "Foundation" else html.Span()
 
     type_counts = df["dual_type"].value_counts()
     kpis = dbc.Row([
@@ -485,6 +635,7 @@ def update_dual(method, sector, tab):
     ], className="mb-3")
 
     return (
+        watch,
         kpis,
         quadrant_scatter(df_filt.copy()),
         type_donut(df),

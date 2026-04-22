@@ -5,19 +5,32 @@ UVA CFR Partner Engagement Dashboard — Shared Chart Helpers
 import plotly.graph_objects as go
 import plotly.express as px
 
-# ── Brand Constants ────────────────────────────────────────────────────────────
-UVA_NAVY   = "#232D4B"
-UVA_ORANGE = "#E57200"
-UVA_BLUE   = "#1565C0"
-LIGHT_BG   = "#F7F8FA"
-CARD_BG    = "#FFFFFF"
-BORDER     = "#DEE2E6"
-TEXT_DARK  = "#1A1F2E"
-TEXT_MID   = "#4A5568"
-TEXT_LIGHT = "#8492A6"
-GRID_COLOR = "#EDF2F7"
+# ── Brand Constants — Official UVA Brand Palette (brand.virginia.edu) ─────────
+# Primary
+UVA_NAVY   = "#232D4B"   # Official UVA Blue
+UVA_ORANGE = "#E57200"   # Official UVA Orange
 
-CHART_FONT = "Libre Franklin, Segoe UI, sans-serif"
+# Official secondary palette
+UVA_CYAN    = "#009FDF"
+UVA_YELLOW  = "#FDDA24"
+UVA_TEAL    = "#25CAD3"
+UVA_GREEN   = "#62BB46"
+UVA_MAGENTA = "#EF3F6B"
+UVA_LINK    = "#495E9D"  # Official link blue / web-only
+
+# Neutral / web-only — official values from brand.virginia.edu
+LIGHT_BG   = "#F1F1EF"   # Official light gray
+CARD_BG    = "#FFFFFF"
+BORDER     = "#DADADA"   # Official medium gray
+TEXT_DARK  = "#232D4B"   # Using navy for headings
+TEXT_MID   = "#666666"   # Official text gray
+TEXT_LIGHT = "#8492A6"
+GRID_COLOR = "#EBEBEA"   # Slightly off-white for grid lines
+
+# Legacy alias used in some pages
+UVA_BLUE   = UVA_LINK
+
+CHART_FONT = "Libre Franklin, Franklin Gothic Medium, Segoe UI, Arial, sans-serif"
 
 TIER_COLORS = {
     "Strategic":  "#E57200",
@@ -39,26 +52,30 @@ SECTOR_COLORS = {
 
 
 def chart_layout(title="", height=380, show_legend=True):
-    """Base layout dict for all Plotly charts."""
+    """Base layout dict for all Plotly charts — UVA Brand 2024."""
     return dict(
         template="plotly_white",
         title=dict(
-            text=f'<span style="font-size:13px;font-weight:700;color:{TEXT_DARK};'
-                 f'font-family:{CHART_FONT}">{title}</span>',
+            text=f'<span style="font-size:13px;font-weight:700;color:{UVA_NAVY};'
+                 f'font-family:{CHART_FONT};letter-spacing:0.01em">{title}</span>',
             x=0.01, xref="paper",
         ),
         paper_bgcolor=CARD_BG,
-        plot_bgcolor=LIGHT_BG,
+        plot_bgcolor="#FAFAFA",
         height=height,
         margin=dict(l=50, r=20, t=50, b=40),
         font=dict(color=TEXT_MID, size=11, family=CHART_FONT),
-        xaxis=dict(gridcolor=GRID_COLOR, linecolor=BORDER, tickfont=dict(size=10)),
-        yaxis=dict(gridcolor=GRID_COLOR, linecolor=BORDER, tickfont=dict(size=10)),
+        xaxis=dict(gridcolor=GRID_COLOR, linecolor=BORDER,
+                   tickfont=dict(size=10, color=TEXT_MID),
+                   zerolinecolor=BORDER),
+        yaxis=dict(gridcolor=GRID_COLOR, linecolor=BORDER,
+                   tickfont=dict(size=10, color=TEXT_MID),
+                   zerolinecolor=BORDER),
         legend=dict(
-            bgcolor="rgba(255,255,255,0.9)",
+            bgcolor="rgba(255,255,255,0.95)",
             bordercolor=BORDER,
             borderwidth=1,
-            font=dict(size=10),
+            font=dict(size=10, family=CHART_FONT),
             orientation="h",
             yanchor="bottom", y=1.02,
             xanchor="right",  x=1,

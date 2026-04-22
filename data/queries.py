@@ -40,24 +40,44 @@ PARTNER_TIERS = [
 ]
 
 SECTOR_COLORS = {
-    # Corporate sectors
-    "Tech":       "#1976D2",
-    "Consulting": "#E57200",
-    "Defense":    "#C62828",
-    "Healthcare": "#2E7D32",
-    "Pharma":     "#6A1B9A",
-    "Finance":    "#00838F",
-    "Energy":     "#558B2F",
-    # Foundation sectors
-    "Health":     "#B71C1C",
-    "Science":    "#0D47A1",
-    "Education":  "#E65100",
-    "Social":     "#33691E",
-    "Arts":       "#4527A0",
+    # Corporate sectors — UVA brand-adjacent palette
+    "Tech":       "#009FDF",   # UVA Cyan
+    "Consulting": "#E57200",   # UVA Orange
+    "Defense":    "#232D4B",   # UVA Navy
+    "Healthcare": "#62BB46",   # UVA Green
+    "Pharma":     "#EF3F6B",   # UVA Magenta
+    "Finance":    "#25CAD3",   # UVA Teal
+    "Energy":     "#558B2F",   # Dark green (energy/environment)
+    # Foundation sectors — UVA brand secondary palette
+    "Health":     "#EF3F6B",   # UVA Magenta
+    "Science":    "#009FDF",   # UVA Cyan
+    "Education":  "#E57200",   # UVA Orange
+    "Social":     "#62BB46",   # UVA Green
+    "Arts":       "#25CAD3",   # UVA Teal
 }
 
 CORPORATE_SECTORS  = ["Tech", "Consulting", "Defense", "Healthcare", "Pharma", "Finance", "Energy"]
 FOUNDATION_SECTORS = ["Health", "Science", "Education", "Social", "Arts"]
+
+# UVA CFR Priority Foundation Watch List — always visible on Foundation tab
+PRIORITY_FOUNDATIONS = [
+    "Anne Mullen Orell Charitable Trust",
+    "Arnold Ventures",
+    "Carnegie Corporation of New York",
+    "Claude Moore Charitable Foundation",
+    "Ford Foundation",
+    "Bill & Melinda Gates Foundation",
+    "William Randolph Hearst Foundation",
+    "William and Flora Hewlett Foundation",
+    "Robert Wood Johnson Foundation",
+    "W.M. Keck Foundation",
+    "Henry Luce Foundation",
+    "Lumina Foundation for Education",
+    "Andrew W. Mellon Foundation",
+    "Gordon & Betty Moore Foundation",
+    "David and Lucile Packard Foundation",
+    "Alfred P. Sloan Foundation",
+]
 
 TIER_COLORS = {
     "Strategic":  "#E57200",

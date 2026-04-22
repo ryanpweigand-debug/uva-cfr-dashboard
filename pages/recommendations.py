@@ -6,7 +6,6 @@ import dash
 from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
 import sys, os
 
@@ -35,16 +34,83 @@ PRIORITIES  = ["All", "High", "Medium", "Low"]
 STATUSES    = ["All", "Open", "In Progress", "Closed"]
 
 
-def rec_summary_chart(recs):
-    grp = recs.groupby(["category","priority"]).size().reset_index(name="count")
-    fig = px.bar(
-        grp, x="category", y="count", color="priority",
-        color_discrete_map=PRIORITY_COLORS,
-        barmode="stack",
-        labels={"count": "# Recommendations", "category": "Category"},
-    )
-    fig.update_layout(**chart_layout("Recommendations by Category and Priority", height=320))
-    return fig
+def rec_status_board(recs):
+    """
+    Kanban-style 3-column status board replacing the hard-to-read stacked bar.
+    Each column = Open / In Progress / Closed.
+    Each row = a pill showing priority color + category + title snippet.
+    """
+    columns = []
+    for status, color in STATUS_COLORS.items():
+        subset = recs[recs["status"] == status].sort_values("priority",
+            key=lambda s: s.map({"High": 0, "Medium": 1, "Low": 2}))
+
+        pills = []
+        for _, row in subset.iterrows():
+            pc   = PRIORITY_COLORS.get(row["priority"], "#999")
+            cc   = CATEGORY_COLORS.get(row["category"], "#999")
+            title_short = row["title"][:52] + "…" if len(row["title"]) > 52 else row["title"]
+            pills.append(html.Div([
+                html.Div([
+                    html.Span(row["priority"][0], style={
+                        "background": pc, "color": "#fff",
+                        "fontSize": "0.58rem", "fontWeight": "800",
+                        "width": "16px", "height": "16px",
+                        "borderRadius": "3px", "display": "inline-flex",
+                        "alignItems": "center", "justifyContent": "center",
+                        "flexShrink": "0", "marginRight": "6px",
+                    }),
+                    html.Span(row["category"], style={
+                        "fontSize": "0.6rem", "color": cc,
+                        "fontWeight": "700", "marginRight": "4px",
+                        "flexShrink": "0",
+                    }),
+                    html.Span(title_short, style={
+                        "fontSize": "0.68rem", "color": TEXT_DARK,
+                        "lineHeight": "1.3",
+                    }),
+                ], style={"display": "flex", "alignItems": "flex-start"}),
+            ], style={
+                "padding": "7px 10px",
+                "marginBottom": "5px",
+                "background": LIGHT_BG,
+                "borderRadius": "5px",
+                "borderLeft": f"3px solid {pc}",
+            }))
+
+        if not pills:
+            pills = [html.Div("—", style={"fontSize": "0.75rem", "color": TEXT_LIGHT,
+                                           "padding": "8px 0"})]
+
+        columns.append(dbc.Col([
+            html.Div([
+                html.Div([
+                    html.Span("●", style={"color": color, "marginRight": "6px",
+                                           "fontSize": "0.75rem"}),
+                    html.Span(status.upper(), style={
+                        "fontFamily": "var(--font-brand)", "fontWeight": "800",
+                        "fontSize": "0.68rem", "color": color,
+                        "letterSpacing": "0.07em",
+                    }),
+                    html.Span(f"  {len(subset)}", style={
+                        "fontSize": "0.68rem", "color": TEXT_MID,
+                        "fontWeight": "600", "marginLeft": "6px",
+                    }),
+                ], style={"display": "flex", "alignItems": "center",
+                          "marginBottom": "10px", "paddingBottom": "8px",
+                          "borderBottom": f"2px solid {color}"}),
+                html.Div(pills, style={"maxHeight": "280px", "overflowY": "auto"}),
+            ], style={
+                "background": CARD_BG,
+                "border": f"1px solid {BORDER}",
+                "borderTop": f"3px solid {color}",
+                "borderRadius": "8px",
+                "padding": "14px",
+                "height": "100%",
+            }),
+        ], md=4, className="mb-3"))
+
+    return dbc.Row(columns)
 
 
 def value_by_category_chart(recs):
@@ -161,20 +227,17 @@ layout = html.Div([
         ], md=3),
     ], className="filter-row mb-3"),
 
-    # Charts
+    # Status board (kanban) + value chart
+    html.Div(id="rec-status-board", className="mb-3"),
     dbc.Row([
-        dbc.Col([
-            html.Div([dcc.Graph(id="rec-summary-chart", config={"displayModeBar": False})],
-                     className="chart-card"),
-        ], md=5),
         dbc.Col([
             html.Div([dcc.Graph(id="rec-value-chart", config={"displayModeBar": False})],
                      className="chart-card"),
-        ], md=4),
+        ], md=7),
         dbc.Col([
             html.Div([dcc.Graph(id="rec-timeline", config={"displayModeBar": False})],
                      className="chart-card"),
-        ], md=3),
+        ], md=5),
     ], className="mb-3"),
 
     # Cards
@@ -185,7 +248,7 @@ layout = html.Div([
 
 
 @callback(
-    Output("rec-summary-chart",    "figure"),
+    Output("rec-status-board",     "children"),
     Output("rec-value-chart",      "figure"),
     Output("rec-timeline",         "figure"),
     Output("rec-cards-container",  "children"),
@@ -235,7 +298,7 @@ def update_recs(cat, pri, status):
                                          className="placeholder-text")
 
     return (
-        rec_summary_chart(recs),
+        rec_status_board(recs_f),
         value_by_category_chart(recs),
         timeline_chart(recs_f),
         cards,
