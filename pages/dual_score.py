@@ -146,51 +146,103 @@ def quadrant_scatter(df, sector="All"):
     return fig
 
 
-# ── 3. Dual score bar matrix ──────────────────────────────────────────────────
-def dual_bar_matrix(df, sector="All", n=20):
+# ── 3. Top-5 per Type spotlight panel ────────────────────────────────────────
+def mini_bar(pct, color):
+    """Inline HTML progress bar, no Plotly needed."""
+    return html.Div(
+        html.Div(style={
+            "width": f"{max(pct, 2):.1f}%", "height": "100%",
+            "background": color, "borderRadius": "2px",
+            "transition": "width 0.3s ease",
+        }),
+        style={
+            "background": "rgba(0,0,0,0.07)", "height": "5px",
+            "borderRadius": "2px", "overflow": "hidden", "marginTop": "2px",
+        }
+    )
+
+
+def spotlight_partner_row(row, type_color):
+    return html.Div([
+        html.Div(row["name"], style={
+            "fontWeight": "600", "fontSize": "0.82rem",
+            "color": UVA_NAVY, "marginBottom": "5px",
+            "whiteSpace": "nowrap", "overflow": "hidden",
+            "textOverflow": "ellipsis",
+        }),
+        html.Div([
+            html.Div([
+                html.Div([
+                    html.Span("RSI", style={"fontSize": "0.65rem", "color": TEXT_LIGHT,
+                                            "fontWeight": "700", "marginRight": "4px"}),
+                    html.Span(f"{row['rsi']:.1f}", style={"fontSize": "0.72rem",
+                                                           "color": UVA_NAVY, "fontWeight": "700"}),
+                ], style={"display": "flex", "alignItems": "center"}),
+                mini_bar(row["rsi_pct"], UVA_NAVY),
+            ], style={"marginBottom": "5px"}),
+            html.Div([
+                html.Div([
+                    html.Span("SOI", style={"fontSize": "0.65rem", "color": TEXT_LIGHT,
+                                            "fontWeight": "700", "marginRight": "4px"}),
+                    html.Span(f"{row['soi']:.1f}", style={"fontSize": "0.72rem",
+                                                           "color": UVA_ORANGE, "fontWeight": "700"}),
+                ], style={"display": "flex", "alignItems": "center"}),
+                mini_bar(row["soi_pct"], UVA_ORANGE),
+            ]),
+        ]),
+    ], style={
+        "padding": "10px 0",
+        "borderBottom": f"1px solid rgba(0,0,0,0.07)",
+    })
+
+
+def type_spotlight(df, sector="All"):
     if sector != "All":
         df = df[df["sector"] == sector]
-    df = df.sort_values("rsi", ascending=False).head(n)
 
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        name="RSI — Relationship Strength (0–70)",
-        y=df["name"],
-        x=df["rsi"],
-        orientation="h",
-        marker=dict(
-            color=[DUAL_PARTNER_TYPES[t]["color"] for t in df["dual_type"]],
-            opacity=0.85,
-        ),
-        text=[f"RSI {v:.1f}" for v in df["rsi"]],
-        textposition="inside",
-        insidetextanchor="middle",
-        textfont=dict(color="white", size=9),
-        hovertemplate="<b>%{y}</b><br>RSI: %{x:.1f} / 70<extra></extra>",
-    ))
-    fig.add_trace(go.Bar(
-        name="SOI — Strategic Opportunity (0–30)",
-        y=df["name"],
-        x=df["soi"],
-        orientation="h",
-        marker=dict(color=UVA_ORANGE, opacity=0.55,
-                    pattern_shape="/", pattern_fgcolor=UVA_ORANGE),
-        text=[f"SOI {v:.1f}" for v in df["soi"]],
-        textposition="inside",
-        insidetextanchor="middle",
-        textfont=dict(color=UVA_ORANGE, size=9),
-        hovertemplate="<b>%{y}</b><br>SOI: %{x:.1f} / 30<extra></extra>",
-    ))
+    cols = []
+    for type_name, info in DUAL_PARTNER_TYPES.items():
+        top5 = df[df["dual_type"] == type_name].sort_values(
+            "rsi" if type_name in ("Anchor", "Legacy") else "soi",
+            ascending=False
+        ).head(5)
 
-    lo = chart_layout(f"RSI + SOI Side-by-Side — Top {n} by Relationship Strength",
-                      height=max(400, n * 30 + 80))
-    lo["barmode"] = "group"
-    lo["xaxis"].update(title="Score", range=[0, 75])
-    lo["xaxis2"] = dict(range=[0, 35])
-    lo["legend"] = dict(orientation="h", yanchor="bottom", y=1.02,
-                        xanchor="right", x=1, font=dict(size=10))
-    fig.update_layout(**lo)
-    return fig
+        rows = [spotlight_partner_row(row, info["color"])
+                for _, row in top5.iterrows()]
+
+        if not rows:
+            rows = [html.Div("No partners in this quadrant",
+                             style={"fontSize": "0.78rem", "color": TEXT_LIGHT,
+                                    "padding": "12px 0"})]
+
+        col = dbc.Col([
+            html.Div([
+                # Column header
+                html.Div([
+                    html.Span(info["icon"], style={"fontSize": "1.1rem", "marginRight": "6px"}),
+                    html.Span(type_name, style={
+                        "fontFamily": "var(--font-brand)", "fontWeight": "700",
+                        "fontSize": "0.92rem", "color": info["color"],
+                    }),
+                ], style={"display": "flex", "alignItems": "center",
+                          "marginBottom": "4px"}),
+                html.Div(info["action"], style={
+                    "fontSize": "0.68rem", "color": TEXT_MID,
+                    "marginBottom": "10px", "lineHeight": "1.35",
+                }),
+                # Partner rows
+                html.Div(rows),
+            ], style={
+                "borderTop": f"3px solid {info['color']}",
+                "padding": "14px 16px",
+                "background": CARD_BG,
+                "borderRadius": "0 0 var(--radius, 8px) var(--radius, 8px)",
+                "height": "100%",
+            }),
+        ], md=3, sm=6, xs=12, className="mb-3")
+        cols.append(col)
+
+    return dbc.Row(cols)
 
 
 # ── 4. Partner type distribution donut ───────────────────────────────────────
@@ -220,45 +272,7 @@ def type_donut(df):
     return fig
 
 
-# ── 5. RSI vs SOI divergence bar ─────────────────────────────────────────────
-def divergence_bar(df, n=20):
-    """Shows how much each partner 'leans' RSI vs SOI (normalized to same 0-100 scale)."""
-    df = df.sort_values("rsi_pct", ascending=False).head(n).copy()
-    df["rsi_norm"] = df["rsi_pct"]        # already 0-100
-    df["soi_norm"] = df["soi_pct"]        # already 0-100
-    df["divergence"] = df["rsi_norm"] - df["soi_norm"]
-
-    fig = go.Figure()
-    for _, row in df.iterrows():
-        color = DUAL_PARTNER_TYPES[row["dual_type"]]["color"]
-        fig.add_trace(go.Bar(
-            x=[row["divergence"]],
-            y=[row["name"]],
-            orientation="h",
-            marker_color=color if row["divergence"] >= 0 else UVA_ORANGE,
-            marker_opacity=0.8,
-            showlegend=False,
-            hovertemplate=(
-                f"<b>{row['name']}</b><br>"
-                f"RSI%: {row['rsi_norm']:.1f}%<br>"
-                f"SOI%: {row['soi_norm']:.1f}%<br>"
-                f"Divergence: {row['divergence']:+.1f}%<extra></extra>"
-            ),
-        ))
-
-    fig.add_vline(x=0, line_color=TEXT_MID, line_width=1.5)
-    lo = chart_layout(
-        "RSI vs SOI Divergence (normalized %) — Relationship-Heavy ← 0 → Opportunity-Heavy",
-        height=max(380, n * 26 + 80)
-    )
-    lo["xaxis"].update(title="RSI% minus SOI% (positive = relationship-heavy)",
-                       zeroline=True, zerolinecolor=TEXT_MID)
-    lo["margin"]["l"] = 160
-    fig.update_layout(**lo)
-    return fig
-
-
-# ── 6. Partner detail table ───────────────────────────────────────────────────
+# ── 5. Partner detail table ───────────────────────────────────────────────────
 def dual_score_table(df):
     table_df = df[["name", "sector", "rsi", "soi", "rsi_pct", "soi_pct",
                    "dual_type", "dual_action"]].copy()
@@ -380,15 +394,9 @@ layout = html.Div([
         ], md=4),
     ], className="mb-3"),
 
-    # ── Dual bar matrix ───────────────────────────────────────────────────────
-    html.Div([
-        dcc.Graph(id="dual-bar-matrix", config={"displayModeBar": False}),
-    ], className="chart-card mb-3"),
-
-    # ── Divergence bar ────────────────────────────────────────────────────────
-    html.Div([
-        dcc.Graph(id="dual-divergence", config={"displayModeBar": False}),
-    ], className="chart-card mb-3"),
+    # ── Top 5 per type spotlight ──────────────────────────────────────────────
+    html.Div("TOP 5 PARTNERS BY TYPE", className="section-eyebrow mb-2 px-1"),
+    html.Div(id="dual-spotlight", className="mb-3"),
 
     # ── Full table ────────────────────────────────────────────────────────────
     html.Div("FULL PARTNER DUAL SCORE TABLE", className="section-eyebrow mb-2 px-1"),
@@ -401,57 +409,51 @@ layout = html.Div([
 
 # ── Callbacks ──────────────────────────────────────────────────────────────────
 @callback(
-    Output("dual-kpi-row",    "children"),
-    Output("dual-quadrant",   "figure"),
-    Output("dual-donut",      "figure"),
-    Output("dual-bar-matrix", "figure"),
-    Output("dual-divergence", "figure"),
-    Output("dual-table",      "children"),
-    Input("dual-method-dd",   "value"),
-    Input("dual-sector-dd",   "value"),
+    Output("dual-kpi-row",   "children"),
+    Output("dual-quadrant",  "figure"),
+    Output("dual-donut",     "figure"),
+    Output("dual-spotlight", "children"),
+    Output("dual-table",     "children"),
+    Input("dual-method-dd",  "value"),
+    Input("dual-sector-dd",  "value"),
 )
 def update_dual(method, sector):
     df = load_dual_scored_partners(method)
-
-    # Filter for charts that respect sector
     df_filt = df if sector == "All" else df[df["sector"] == sector]
 
     # KPI row
     type_counts = df["dual_type"].value_counts()
-    kpis = html.Div([
-        dbc.Row([
-            dbc.Col(html.Div([
-                html.Div(f"{type_counts.get('Anchor', 0)}", className="stat-value",
-                         style={"color": DUAL_PARTNER_TYPES['Anchor']['color']}),
-                html.Div("⚓ Anchor Partners", className="stat-label"),
-                html.Div("High RSI + High SOI", className="stat-sub"),
-            ], className="stat-card"), md=3, sm=6, xs=6),
-            dbc.Col(html.Div([
-                html.Div(f"{type_counts.get('Growth', 0)}", className="stat-value",
-                         style={"color": DUAL_PARTNER_TYPES['Growth']['color']}),
-                html.Div("🚀 Growth Partners", className="stat-label"),
-                html.Div("Low RSI + High SOI", className="stat-sub"),
-            ], className="stat-card"), md=3, sm=6, xs=6),
-            dbc.Col(html.Div([
-                html.Div(f"{type_counts.get('Legacy', 0)}", className="stat-value",
-                         style={"color": DUAL_PARTNER_TYPES['Legacy']['color']}),
-                html.Div("🏛️ Legacy Partners", className="stat-label"),
-                html.Div("High RSI + Low SOI", className="stat-sub"),
-            ], className="stat-card"), md=3, sm=6, xs=6),
-            dbc.Col(html.Div([
-                html.Div(f"{type_counts.get('Emerging', 0)}", className="stat-value",
-                         style={"color": DUAL_PARTNER_TYPES['Emerging']['color']}),
-                html.Div("🌱 Emerging Partners", className="stat-label"),
-                html.Div("Low RSI + Low SOI", className="stat-sub"),
-            ], className="stat-card"), md=3, sm=6, xs=6),
-        ]),
-    ])
+    kpis = dbc.Row([
+        dbc.Col(html.Div([
+            html.Div(f"{type_counts.get('Anchor', 0)}", className="stat-value",
+                     style={"color": DUAL_PARTNER_TYPES['Anchor']['color']}),
+            html.Div("⚓ Anchor Partners", className="stat-label"),
+            html.Div("High RSI + High SOI", className="stat-sub"),
+        ], className="stat-card"), md=3, sm=6, xs=6),
+        dbc.Col(html.Div([
+            html.Div(f"{type_counts.get('Growth', 0)}", className="stat-value",
+                     style={"color": DUAL_PARTNER_TYPES['Growth']['color']}),
+            html.Div("🚀 Growth Partners", className="stat-label"),
+            html.Div("Low RSI + High SOI", className="stat-sub"),
+        ], className="stat-card"), md=3, sm=6, xs=6),
+        dbc.Col(html.Div([
+            html.Div(f"{type_counts.get('Legacy', 0)}", className="stat-value",
+                     style={"color": DUAL_PARTNER_TYPES['Legacy']['color']}),
+            html.Div("🏛️ Legacy Partners", className="stat-label"),
+            html.Div("High RSI + Low SOI", className="stat-sub"),
+        ], className="stat-card"), md=3, sm=6, xs=6),
+        dbc.Col(html.Div([
+            html.Div(f"{type_counts.get('Emerging', 0)}", className="stat-value",
+                     style={"color": DUAL_PARTNER_TYPES['Emerging']['color']}),
+            html.Div("🌱 Emerging Partners", className="stat-label"),
+            html.Div("Low RSI + Low SOI", className="stat-sub"),
+        ], className="stat-card"), md=3, sm=6, xs=6),
+    ], className="mb-3")
 
     return (
         kpis,
         quadrant_scatter(df_filt.copy()),
         type_donut(df),
-        dual_bar_matrix(df_filt.copy(), n=20),
-        divergence_bar(df_filt.copy(), n=20),
+        type_spotlight(df_filt.copy(), sector),
         dual_score_table(df),
     )
