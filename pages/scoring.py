@@ -3,7 +3,7 @@ Partner Scoring Page — Ahsan's 100-pt methodology with dropdowns and detail vi
 """
 
 import dash
-from dash import html, dcc, callback, Input, Output, dash_table
+from dash import html, dcc, callback, Input, Output, State, dash_table
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import plotly.express as px
@@ -17,6 +17,7 @@ from queries import (
     load_scored_partners, load_partners,
     RELATIONSHIP_METRICS, STRATEGIC_METRICS, ALL_METRICS,
     PARTNER_TIERS, TIER_COLORS, SECTOR_COLORS, get_tier,
+    CORPORATE_SECTORS, FOUNDATION_SECTORS,
 )
 from charts import (
     UVA_NAVY, UVA_ORANGE, LIGHT_BG, CARD_BG, TEXT_DARK, TEXT_MID, TEXT_LIGHT,
@@ -27,6 +28,13 @@ dash.register_page(__name__, path="/scoring", name="Partner Scoring", order=1)
 
 ALL_SECTORS = ["All"] + sorted(SECTOR_COLORS.keys())
 ALL_TIERS   = ["All", "Strategic", "Active", "Developing", "Prospect", "Inactive"]
+
+_TAB  = dict(backgroundColor="transparent", border="none",
+             borderBottom="3px solid transparent", color=TEXT_MID,
+             fontWeight="600", fontFamily=CHART_FONT, fontSize="0.88rem",
+             padding="12px 24px")
+_TSEL = {**_TAB, "color": UVA_NAVY,
+         "borderBottom": f"3px solid {UVA_ORANGE}", "fontWeight": "700"}
 
 
 # ── Ranking bar chart ─────────────────────────────────────────────────────────
@@ -273,6 +281,19 @@ layout = html.Div([
         ),
     ], className="page-header"),
 
+    # ── Partner Type Tabs ─────────────────────────────────────────────────
+    dcc.Tabs(
+        id="scoring-type-tabs", value="Corporate",
+        style={"borderBottom": f"1px solid {BORDER}", "marginBottom": "20px",
+               "backgroundColor": CARD_BG},
+        children=[
+            dcc.Tab(label="🏢  Corporate Relations", value="Corporate",
+                    style=_TAB, selected_style=_TSEL),
+            dcc.Tab(label="🏛️  Foundation Relations", value="Foundation",
+                    style=_TAB, selected_style=_TSEL),
+        ],
+    ),
+
     # ── Filters ──────────────────────────────────────────────────────────────
     dbc.Row([
         dbc.Col([
@@ -348,17 +369,32 @@ layout = html.Div([
 
 
 # ── Callbacks ──────────────────────────────────────────────────────────────────
+# ── Reset sector options when tab switches ────────────────────────────────────
 @callback(
-    Output("rankings-bar",      "figure"),
-    Output("stacked-breakdown", "figure"),
-    Output("metric-heatmap",    "figure"),
-    Output("scoring-partner-dd","options"),
-    Input("scoring-method-dd",  "value"),
-    Input("scoring-sector-dd",  "value"),
-    Input("scoring-tier-dd",    "value"),
+    Output("scoring-sector-dd", "options"),
+    Output("scoring-sector-dd", "value"),
+    Input("scoring-type-tabs",  "value"),
+    State("scoring-sector-dd",  "value"),
 )
-def update_charts(method, sector, tier):
-    scored = load_scored_partners(method)
+def _reset_scoring_sector(tab, cur):
+    sectors = CORPORATE_SECTORS if tab == "Corporate" else FOUNDATION_SECTORS
+    opts = [{"label": s, "value": s} for s in ["All"] + sectors]
+    val  = cur if cur in (["All"] + sectors) else "All"
+    return opts, val
+
+
+@callback(
+    Output("rankings-bar",       "figure"),
+    Output("stacked-breakdown",  "figure"),
+    Output("metric-heatmap",     "figure"),
+    Output("scoring-partner-dd", "options"),
+    Input("scoring-method-dd",   "value"),
+    Input("scoring-sector-dd",   "value"),
+    Input("scoring-tier-dd",     "value"),
+    Input("scoring-type-tabs",   "value"),
+)
+def update_charts(method, sector, tier, tab):
+    scored = load_scored_partners(method, tab)
     partner_opts = [{"label": f"#{int(r['rank'])} {r['name']}", "value": r['name']}
                     for _, r in scored.sort_values("rank").iterrows()]
     return (
@@ -371,25 +407,30 @@ def update_charts(method, sector, tier):
 
 @callback(
     Output("partner-detail-section", "children"),
-    Input("scoring-partner-dd", "value"),
-    Input("scoring-method-dd",  "value"),
+    Input("scoring-partner-dd",      "value"),
+    Input("scoring-method-dd",       "value"),
+    Input("scoring-type-tabs",       "value"),
 )
-def show_partner_detail(partner_name, method):
+def show_partner_detail(partner_name, method, tab):
     if not partner_name:
         return html.Div(
             "← Select a partner from the dropdown or click a bar to see the full detail view.",
             className="placeholder-text",
         )
-    raw    = load_partners()
-    scored = load_scored_partners(method)
-    pr = raw[raw["name"] == partner_name].iloc[0]
-    sr = scored[scored["name"] == partner_name].iloc[0]
-    return partner_detail_card(pr, sr)
+    raw    = load_partners(tab)
+    scored = load_scored_partners(method, tab)
+    pr = raw[raw["name"] == partner_name]
+    if pr.empty:
+        return html.Div("Partner not found.", className="placeholder-text")
+    sr = scored[scored["name"] == partner_name]
+    if sr.empty:
+        return html.Div("Partner not found.", className="placeholder-text")
+    return partner_detail_card(pr.iloc[0], sr.iloc[0])
 
 
 @callback(
     Output("scoring-partner-dd", "value"),
-    Input("rankings-bar", "clickData"),
+    Input("rankings-bar",        "clickData"),
 )
 def select_from_bar(click):
     if click and click.get("points"):

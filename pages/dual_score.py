@@ -14,7 +14,7 @@ Partner Types (quadrant):
 """
 
 import dash
-from dash import html, dcc, callback, Input, Output, dash_table
+from dash import html, dcc, callback, Input, Output, State, dash_table
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import plotly.express as px
@@ -28,6 +28,7 @@ from queries import (
     load_dual_scored_partners, load_partners,
     RELATIONSHIP_METRICS, STRATEGIC_METRICS,
     SECTOR_COLORS, DUAL_PARTNER_TYPES,
+    CORPORATE_SECTORS, FOUNDATION_SECTORS,
 )
 from charts import (
     UVA_NAVY, UVA_ORANGE, LIGHT_BG, CARD_BG, TEXT_DARK, TEXT_MID,
@@ -41,6 +42,13 @@ ALL_TYPES   = ["All", "Anchor", "Growth", "Legacy", "Emerging"]
 
 RSI_MID = 35   # midpoint of 0-70
 SOI_MID = 15   # midpoint of 0-30
+
+_TAB  = dict(backgroundColor="transparent", border="none",
+             borderBottom="3px solid transparent", color=TEXT_MID,
+             fontWeight="600", fontFamily=CHART_FONT, fontSize="0.88rem",
+             padding="12px 24px")
+_TSEL = {**_TAB, "color": UVA_NAVY,
+         "borderBottom": f"3px solid {UVA_ORANGE}", "fontWeight": "700"}
 
 
 # ── 1. Theory explainer cards ─────────────────────────────────────────────────
@@ -332,6 +340,19 @@ layout = html.Div([
         ),
     ], className="page-header"),
 
+    # ── Partner Type Tabs ─────────────────────────────────────────────────
+    dcc.Tabs(
+        id="dual-type-tabs", value="Corporate",
+        style={"borderBottom": f"1px solid {BORDER}", "marginBottom": "20px",
+               "backgroundColor": CARD_BG},
+        children=[
+            dcc.Tab(label="🏢  Corporate Relations", value="Corporate",
+                    style=_TAB, selected_style=_TSEL),
+            dcc.Tab(label="🏛️  Foundation Relations", value="Foundation",
+                    style=_TAB, selected_style=_TSEL),
+        ],
+    ),
+
     # ── Filters ───────────────────────────────────────────────────────────────
     dbc.Row([
         dbc.Col([
@@ -409,6 +430,19 @@ layout = html.Div([
 
 # ── Callbacks ──────────────────────────────────────────────────────────────────
 @callback(
+    Output("dual-sector-dd", "options"),
+    Output("dual-sector-dd", "value"),
+    Input("dual-type-tabs",  "value"),
+    State("dual-sector-dd",  "value"),
+)
+def _reset_dual_sector(tab, cur):
+    sectors = CORPORATE_SECTORS if tab == "Corporate" else FOUNDATION_SECTORS
+    opts = [{"label": s, "value": s} for s in ["All"] + sectors]
+    val  = cur if cur in (["All"] + sectors) else "All"
+    return opts, val
+
+
+@callback(
     Output("dual-kpi-row",   "children"),
     Output("dual-quadrant",  "figure"),
     Output("dual-donut",     "figure"),
@@ -416,12 +450,12 @@ layout = html.Div([
     Output("dual-table",     "children"),
     Input("dual-method-dd",  "value"),
     Input("dual-sector-dd",  "value"),
+    Input("dual-type-tabs",  "value"),
 )
-def update_dual(method, sector):
-    df = load_dual_scored_partners(method)
+def update_dual(method, sector, tab):
+    df = load_dual_scored_partners(method, tab)
     df_filt = df if sector == "All" else df[df["sector"] == sector]
 
-    # KPI row
     type_counts = df["dual_type"].value_counts()
     kpis = dbc.Row([
         dbc.Col(html.Div([

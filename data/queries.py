@@ -40,6 +40,7 @@ PARTNER_TIERS = [
 ]
 
 SECTOR_COLORS = {
+    # Corporate sectors
     "Tech":       "#1976D2",
     "Consulting": "#E57200",
     "Defense":    "#C62828",
@@ -47,7 +48,16 @@ SECTOR_COLORS = {
     "Pharma":     "#6A1B9A",
     "Finance":    "#00838F",
     "Energy":     "#558B2F",
+    # Foundation sectors
+    "Health":     "#B71C1C",
+    "Science":    "#0D47A1",
+    "Education":  "#E65100",
+    "Social":     "#33691E",
+    "Arts":       "#4527A0",
 }
+
+CORPORATE_SECTORS  = ["Tech", "Consulting", "Defense", "Healthcare", "Pharma", "Finance", "Energy"]
+FOUNDATION_SECTORS = ["Health", "Science", "Education", "Social", "Arts"]
 
 TIER_COLORS = {
     "Strategic":  "#E57200",
@@ -197,18 +207,22 @@ def compute_dual_scores(df: pd.DataFrame, method: str = "percentile") -> pd.Data
     return scored
 
 
-def load_dual_scored_partners(method: str = "percentile") -> pd.DataFrame:
-    return compute_dual_scores(load_partners(), method)
+def load_dual_scored_partners(method: str = "percentile", partner_type: str = None) -> pd.DataFrame:
+    return compute_dual_scores(load_partners(partner_type), method)
 
 
 # ── Data Loaders ──────────────────────────────────────────────────────────────
 
-def load_partners() -> pd.DataFrame:
-    return pd.read_sql("SELECT * FROM partners ORDER BY name", engine)
+def load_partners(partner_type: str = None) -> pd.DataFrame:
+    q = "SELECT * FROM partners"
+    if partner_type:
+        q += f" WHERE partner_type = '{partner_type}'"
+    q += " ORDER BY name"
+    return pd.read_sql(q, engine)
 
 
-def load_scored_partners(method: str = "percentile") -> pd.DataFrame:
-    df = load_partners()
+def load_scored_partners(method: str = "percentile", partner_type: str = None) -> pd.DataFrame:
+    df = load_partners(partner_type)
     if method == "judgment":
         return compute_judgment_scores(df)
     return compute_percentile_scores(df)

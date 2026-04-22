@@ -27,6 +27,7 @@ class Partner(Base):
     revenue_b  = Column(Float,  nullable=True)  # annual revenue in $B
     employees_k= Column(Float,  nullable=True)  # employees in thousands
     notes      = Column(Text,   nullable=True)
+    partner_type = Column(String, nullable=False, default="Corporate")  # Corporate / Foundation
 
     # ── Relationship Strength metrics (70 pts) ─────────────────────────────
     sponsored_research_5yr    = Column(Float, nullable=False, default=0)  # $ last 5 FYs
