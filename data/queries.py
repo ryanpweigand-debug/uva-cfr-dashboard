@@ -15,19 +15,19 @@ engine   = create_engine(f"sqlite:///{DB_PATH}", echo=False)
 # ── Ahsan's Scoring Methodology ───────────────────────────────────────────────
 # (column, display_label, max_points)
 RELATIONSHIP_METRICS = [
-    ("sponsored_research_5yr",    "Sponsored Research (5yr)",    18),
-    ("philanthropy_5yr",          "Philanthropy (5yr)",           14),
-    ("procurement_score",         "Procurement",                   6),
-    ("research_footprint",        "Research Footprint",           10),
-    ("legal_activity",            "Legal / MRAs & Agreements",    12),
-    ("talent_pipeline",           "Talent Pipeline",               5),
-    ("engagement_depth",          "Engagement Depth",              5),
+    ("sponsored_research_5yr",  "Sponsored Research Activity (5yr)",    18),
+    ("procurement_score",       "Procurement Activity (5yr)",            9),
+    ("philanthropy_5yr",        "Philanthropic Activity (5yr)",         14),
+    ("faculty_engagement",      "Faculty Engagement / Innovation (5yr)",10),
+    ("legal_activity",          "Agreements Activity (5yr)",             7),
+    ("talent_pipeline",         "Talent Engagement Footprint (5yr)",     7),
+    ("engagement_depth",        "Organizational Engagement Footprint",   5),
 ]
 STRATEGIC_METRICS = [
-    ("strategic_fit",             "Strategic Fit",                10),
-    ("growth_greenfield",         "Growth / Greenfield",           7),
-    ("access_influence",          "Access & Influence",            8),
-    ("feasibility_timing",        "Feasibility & Timing",          5),
+    ("strategic_fit",           "Strategic Fit",                        10),
+    ("growth_greenfield",       "Greenfield / Growth",                   5),
+    ("access_influence",        "Access & Influence",                    8),
+    ("feasibility_timing",      "Feasibility & Timing",                  7),
 ]
 ALL_METRICS = RELATIONSHIP_METRICS + STRATEGIC_METRICS
 
@@ -93,7 +93,8 @@ def compute_judgment_scores(df: pd.DataFrame) -> pd.DataFrame:
     points = (rating / 10) * max_points
     """
     QUALITATIVE = {"engagement_depth", "strategic_fit", "growth_greenfield",
-                   "access_influence", "feasibility_timing", "procurement_score"}
+                   "access_influence", "feasibility_timing", "procurement_score",
+                   "faculty_engagement"}
     scored = df.copy()
     for col, _, max_pts in ALL_METRICS:
         if col in QUALITATIVE:

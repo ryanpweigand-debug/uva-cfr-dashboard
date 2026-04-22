@@ -30,13 +30,14 @@ class Partner(Base):
 
     # ── Relationship Strength metrics (70 pts) ─────────────────────────────
     sponsored_research_5yr    = Column(Float, nullable=False, default=0)  # $ last 5 FYs
-    sponsored_research_alltime= Column(Float, nullable=False, default=0)  # $ all-time
+    sponsored_research_alltime= Column(Float, nullable=False, default=0)  # $ all-time (stored, not scored)
     philanthropy_5yr          = Column(Float, nullable=False, default=0)  # $ last 5 FYs
-    procurement_score         = Column(Float, nullable=False, default=0)  # 0-10 holistic procurement value
-    research_footprint        = Column(Float, nullable=False, default=0)  # active project count
-    legal_activity            = Column(Float, nullable=False, default=0)  # NDA/MTA/IP count
-    talent_pipeline           = Column(Float, nullable=False, default=0)  # hires+interns/yr
-    engagement_depth          = Column(Float, nullable=False, default=0)  # 0-10 qualitative
+    procurement_score         = Column(Float, nullable=False, default=0)  # 0-10: goods/services $ from org
+    faculty_engagement        = Column(Float, nullable=False, default=0)  # 0-10: active awards, projects, advisory, IP, startups
+    research_footprint        = Column(Float, nullable=False, default=0)  # legacy: active project count (not scored)
+    legal_activity            = Column(Float, nullable=False, default=0)  # 0-10: NDAs, MTAs, DUAs, MRAs, CTAs
+    talent_pipeline           = Column(Float, nullable=False, default=0)  # 0-10: hires, internships, fellowships
+    engagement_depth          = Column(Float, nullable=False, default=0)  # 0-10: exec visits, co-events, hosted
 
     # ── Strategic Opportunity metrics (30 pts) ─────────────────────────────
     strategic_fit       = Column(Float, nullable=False, default=0)  # 0-10
