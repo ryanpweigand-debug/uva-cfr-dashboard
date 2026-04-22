@@ -16,11 +16,10 @@ engine   = create_engine(f"sqlite:///{DB_PATH}", echo=False)
 # (column, display_label, max_points)
 RELATIONSHIP_METRICS = [
     ("sponsored_research_5yr",    "Sponsored Research (5yr)",    18),
-    ("sponsored_research_alltime","Sponsored Research (All-Time)", 7),
     ("philanthropy_5yr",          "Philanthropy (5yr)",           14),
     ("procurement_score",         "Procurement",                   6),
     ("research_footprint",        "Research Footprint",           10),
-    ("legal_activity",            "Legal / On-Ramp Activity",      5),
+    ("legal_activity",            "Legal / MRAs & Agreements",    12),
     ("talent_pipeline",           "Talent Pipeline",               5),
     ("engagement_depth",          "Engagement Depth",              5),
 ]
