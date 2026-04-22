@@ -117,7 +117,7 @@ def sp_radar_chart(sp_df):
 
 
 def sp_partner_alignment_chart():
-    """Which SP priorities do partners score highest on?"""
+    """Which SP priorities do partners score highest on? (avg bar — kept for radar row)"""
     df = sp_partner_alignment()
     colors = SP_COLORS[:len(df)]
     fig = go.Figure(go.Bar(
@@ -131,6 +131,83 @@ def sp_partner_alignment_chart():
     fig.update_layout(**chart_layout("Partner Alignment by SP Priority (avg 0–10)", height=320))
     fig.update_xaxes(range=[0, 11])
     return fig
+
+
+# ── SP partner spotlight (replaces 30-partner bar chart) ─────────────────────
+def sp_mini_bar(score, color):
+    pct = score / 10 * 100
+    return html.Div(
+        html.Div(style={
+            "width": f"{max(pct, 2):.1f}%", "height": "100%",
+            "background": color, "borderRadius": "2px",
+        }),
+        style={
+            "background": "rgba(0,0,0,0.07)", "height": "5px",
+            "borderRadius": "2px", "overflow": "hidden", "marginTop": "3px",
+        }
+    )
+
+
+def sp_spotlight_row(name, score, color):
+    return html.Div([
+        html.Div([
+            html.Span(name, style={
+                "fontWeight": "600", "fontSize": "0.78rem", "color": UVA_NAVY,
+                "whiteSpace": "nowrap", "overflow": "hidden",
+                "textOverflow": "ellipsis", "flex": "1",
+            }),
+            html.Span(f"{score:.1f}", style={
+                "fontWeight": "700", "fontSize": "0.75rem",
+                "color": color, "marginLeft": "8px", "flexShrink": "0",
+            }),
+        ], style={"display": "flex", "alignItems": "center", "marginBottom": "2px"}),
+        sp_mini_bar(score, color),
+    ], style={"padding": "7px 0", "borderBottom": "1px solid rgba(0,0,0,0.06)"})
+
+
+def sp_partner_spotlight(method="percentile"):
+    df = load_scored_partners(method)
+
+    cols = []
+    for i, (sp_col, label, icon, color) in enumerate(
+        zip(SP_COLS, SP_LABELS, SP_ICONS, SP_COLORS)
+    ):
+        top5 = df.nlargest(5, sp_col)[["name", sp_col]]
+        short_label = label.replace("SP-0", "SP-").replace("SP-", "").split(" ", 1)[-1]
+        code = f"SP-0{i+1}"
+
+        rows = [sp_spotlight_row(r["name"], r[sp_col], color)
+                for _, r in top5.iterrows()]
+
+        cols.append(dbc.Col([
+            html.Div([
+                html.Div([
+                    html.Span(icon, style={"fontSize": "1rem", "marginRight": "5px"}),
+                    html.Span(code, style={
+                        "fontFamily": "var(--font-brand)", "fontWeight": "800",
+                        "fontSize": "0.78rem", "color": color, "marginRight": "5px",
+                    }),
+                    html.Span(SP_LABELS[i].split(" ", 1)[-1], style={
+                        "fontSize": "0.68rem", "color": TEXT_MID,
+                        "fontWeight": "600", "lineHeight": "1.2",
+                    }),
+                ], style={"display": "flex", "alignItems": "flex-start",
+                          "marginBottom": "10px", "flexWrap": "wrap", "gap": "2px"}),
+                html.Div(rows),
+            ], style={
+                "borderTop": f"3px solid {color}",
+                "padding": "12px 14px",
+                "background": CARD_BG,
+                "borderRadius": "0 0 8px 8px",
+                "height": "100%",
+            }),
+        ], md=4, sm=6, xs=12, className="mb-3"))
+
+    # Two rows of 3
+    return html.Div([
+        dbc.Row(cols[:3]),
+        dbc.Row(cols[3:]),
+    ])
 
 
 def sp_bubble_chart():
@@ -260,19 +337,10 @@ def build_layout():
             ], md=4),
         ], className="mb-3"),
 
-        # ── SP Scoring Tab — partner scores per priority ───────────────────────
+        # ── SP Partner Spotlight — top 5 partners per priority ────────────────
         html.Div([
             html.Div("PARTNER ALIGNMENT BY STRATEGIC PRIORITY", className="section-eyebrow mb-3"),
             dbc.Row([
-                dbc.Col([
-                    dbc.Label("Select Priority", className="dropdown-label"),
-                    dcc.Dropdown(
-                        id="sp-priority-dd",
-                        options=[{"label": f"{row['code']}: {row['title']}", "value": col}
-                                 for col, (_, row) in zip(SP_COLS, sp.iterrows())],
-                        value=SP_COLS[1], clearable=False, className="cfr-dropdown",
-                    ),
-                ], md=5),
                 dbc.Col([
                     dbc.Label("Scoring Method", className="dropdown-label"),
                     dcc.Dropdown(
@@ -285,7 +353,7 @@ def build_layout():
                     ),
                 ], md=3),
             ], className="mb-3"),
-            html.Div(id="sp-partner-chart-container"),
+            html.Div(id="sp-partner-spotlight"),
         ], className="section-block"),
 
     ], className="cfr-page")
@@ -295,31 +363,8 @@ layout = build_layout  # callable — Dash calls this lazily at request time
 
 
 @callback(
-    Output("sp-partner-chart-container", "children"),
-    Input("sp-priority-dd", "value"),
-    Input("sp-method-dd",   "value"),
+    Output("sp-partner-spotlight", "children"),
+    Input("sp-method-dd", "value"),
 )
-def sp_partner_chart(sp_col, method):
-    sp = load_strategic_priorities()
-    df = load_scored_partners(method)
-
-    col_idx = SP_COLS.index(sp_col) if sp_col in SP_COLS else 0
-    color = SP_COLORS[col_idx]
-    label = SP_LABELS[col_idx]
-
-    df_sorted = df.sort_values(sp_col, ascending=True)
-    fig = go.Figure(go.Bar(
-        x=df_sorted[sp_col],
-        y=df_sorted["name"],
-        orientation="h",
-        marker_color=color,
-        text=[f"{v:.1f}/10" for v in df_sorted[sp_col]],
-        textposition="outside",
-        hovertemplate="<b>%{y}</b><br>Score: %{x:.1f}/10<extra></extra>",
-    ))
-    lo = chart_layout(f"Partner Scores: {label}", height=max(380, len(df) * 22 + 80))
-    lo["xaxis"]["range"] = [0, 11]
-    fig.update_layout(**lo)
-    return html.Div([
-        dcc.Graph(figure=fig, config={"displayModeBar": False}),
-    ], className="chart-card")
+def sp_partner_chart(method):
+    return sp_partner_spotlight(method)
