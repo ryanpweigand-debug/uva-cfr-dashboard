@@ -12,7 +12,7 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "data"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "components"))
 
-from queries import load_recommendations, load_partners
+from queries import load_recommendations, load_partners, PRIORITY_FOUNDATIONS
 from charts import (
     UVA_NAVY, UVA_ORANGE, LIGHT_BG, CARD_BG, TEXT_DARK, TEXT_MID, TEXT_LIGHT,
     GRID_COLOR, BORDER, CHART_FONT, chart_layout,
@@ -25,11 +25,12 @@ STATUS_COLORS   = {"Open": "#1565C0", "In Progress": UVA_ORANGE, "Closed": "#2E7
 CATEGORY_COLORS = {
     "Research":    UVA_NAVY,
     "Philanthropy":"#6A1B9A",
+    "Foundation":  "#E57200",   # UVA Orange — foundation-specific ask strategy
     "Talent":      "#2E7D32",
     "Strategic":   UVA_ORANGE,
     "Procurement": "#C62828",
 }
-CATEGORIES  = ["All", "Research", "Philanthropy", "Talent", "Strategic", "Procurement"]
+CATEGORIES  = ["All", "Foundation", "Research", "Philanthropy", "Talent", "Strategic", "Procurement"]
 PRIORITIES  = ["All", "High", "Medium", "Low"]
 STATUSES    = ["All", "Open", "In Progress", "Closed"]
 
@@ -184,6 +185,173 @@ def rec_card(row, partners_df):
     ], className="rec-card", style={"borderLeft": f"3px solid {pc}"})
 
 
+def foundation_rec_spotlight(recs_df, partners_df):
+    """
+    Dedicated panel for Foundation-category recommendations, grouped by foundation.
+    Shows the UVA ask strategy derived from each foundation's grant history.
+    """
+    fnd_recs = recs_df[recs_df["category"] == "Foundation"].copy()
+    if fnd_recs.empty:
+        return html.Span()
+
+    # Sort: High first, then by partner name
+    priority_order = {"High": 0, "Medium": 1, "Low": 2}
+    fnd_recs["_pri_ord"] = fnd_recs["priority"].map(priority_order)
+
+    # Group by partner
+    groups = {}
+    no_partner = []
+    for _, row in fnd_recs.sort_values("_pri_ord").iterrows():
+        pid = row.get("partner_id")
+        if pd.notna(pid) and pid:
+            pm = partners_df[partners_df["id"] == int(pid)]
+            pname = pm.iloc[0]["name"] if not pm.empty else "Unknown"
+            groups.setdefault(pname, []).append(row)
+        else:
+            no_partner.append(row)
+
+    cards = []
+    for pname, rows in sorted(groups.items()):
+        is_priority = pname in PRIORITY_FOUNDATIONS
+        priority_badge = html.Span([
+            html.Span("★ ", style={"color": UVA_ORANGE}),
+            html.Span("Priority Foundation", style={
+                "fontSize": "0.6rem", "fontWeight": "700",
+                "color": UVA_ORANGE, "letterSpacing": "0.04em",
+            }),
+        ], style={
+            "background": "rgba(229,114,0,0.08)",
+            "border": "1px solid rgba(229,114,0,0.3)",
+            "borderRadius": "8px", "padding": "1px 7px",
+            "display": "inline-flex", "alignItems": "center",
+            "marginLeft": "8px",
+        }) if is_priority else html.Span()
+
+        rec_rows = []
+        for row in rows:
+            pc  = PRIORITY_COLORS.get(row["priority"], "#999")
+            sc  = STATUS_COLORS.get(row["status"], "#999")
+            val = row["est_value_k"]
+            val_str = f"${val/1000:.1f}M" if val >= 1000 else (f"${val:.0f}K" if val > 0 else "—")
+            rec_rows.append(html.Div([
+                html.Div([
+                    # Priority dot
+                    html.Span(row["priority"][0], style={
+                        "background": pc, "color": "#fff",
+                        "fontSize": "0.58rem", "fontWeight": "800",
+                        "width": "16px", "height": "16px",
+                        "borderRadius": "3px", "display": "inline-flex",
+                        "alignItems": "center", "justifyContent": "center",
+                        "flexShrink": "0", "marginRight": "8px",
+                    }),
+                    html.Div([
+                        html.Div(row["title"], style={
+                            "fontWeight": "700", "fontSize": "0.8rem",
+                            "color": TEXT_DARK, "marginBottom": "3px",
+                        }),
+                        html.Div(row.get("description", ""), style={
+                            "fontSize": "0.71rem", "color": TEXT_MID,
+                            "lineHeight": "1.45",
+                        }),
+                    ], style={"flex": "1"}),
+                    html.Div([
+                        html.Div(val_str, style={
+                            "fontWeight": "800", "fontSize": "0.82rem",
+                            "color": "#2E7D32", "textAlign": "right",
+                        }),
+                        html.Div([
+                            html.Span(row["status"], style={
+                                "fontSize": "0.6rem", "fontWeight": "700",
+                                "color": sc, "border": f"1px solid {sc}",
+                                "borderRadius": "4px", "padding": "1px 5px",
+                            }),
+                        ], style={"textAlign": "right", "marginTop": "3px"}),
+                        html.Div(f"🎯 {row.get('timeline','—')}", style={
+                            "fontSize": "0.62rem", "color": TEXT_LIGHT,
+                            "marginTop": "3px", "textAlign": "right",
+                        }),
+                    ], style={"minWidth": "90px", "marginLeft": "12px"}),
+                ], style={"display": "flex", "alignItems": "flex-start"}),
+            ], style={
+                "padding": "10px 12px",
+                "marginBottom": "6px",
+                "background": LIGHT_BG,
+                "borderRadius": "6px",
+                "borderLeft": f"3px solid {pc}",
+            }))
+
+        top_priority = rows[0]["priority"] if rows else "Low"
+        top_color = PRIORITY_COLORS.get(top_priority, "#999")
+
+        cards.append(html.Div([
+            html.Div([
+                html.Div([
+                    html.Span("🏛️ ", style={"fontSize": "0.85rem"}),
+                    html.Span(pname, style={
+                        "fontFamily": "var(--font-brand)", "fontWeight": "700",
+                        "fontSize": "0.9rem", "color": UVA_NAVY,
+                    }),
+                    priority_badge,
+                ], style={"display": "flex", "alignItems": "center", "flex": "1",
+                          "flexWrap": "wrap", "gap": "4px"}),
+                html.Span(f"{len(rows)} ask{'s' if len(rows)!=1 else ''}", style={
+                    "fontSize": "0.65rem", "color": TEXT_MID, "fontWeight": "600",
+                }),
+            ], style={"display": "flex", "justifyContent": "space-between",
+                      "alignItems": "center", "marginBottom": "10px"}),
+            html.Div(rec_rows),
+        ], style={
+            "background": CARD_BG,
+            "border": f"1px solid {BORDER}",
+            "borderLeft": f"4px solid {top_color}",
+            "borderRadius": "8px",
+            "padding": "14px 16px",
+            "marginBottom": "12px",
+        }))
+
+    if not cards:
+        return html.Span()
+
+    total_val = fnd_recs["est_value_k"].sum()
+    high_ct   = (fnd_recs["priority"] == "High").sum()
+    val_str   = f"${total_val/1000:.1f}M" if total_val >= 1000 else f"${total_val:.0f}K"
+
+    return html.Div([
+        html.Div([
+            html.Div([
+                html.Span("🏛️", style={"fontSize": "1rem", "marginRight": "8px"}),
+                html.Span("FOUNDATION ASK STRATEGY", style={
+                    "fontFamily": "var(--font-brand)", "fontWeight": "800",
+                    "fontSize": "0.78rem", "color": UVA_NAVY, "letterSpacing": "0.08em",
+                }),
+                html.Span("Derived from grant history + UVA institutional strengths",
+                          style={"fontSize": "0.65rem", "color": TEXT_MID, "marginLeft": "10px"}),
+            ], style={"display": "flex", "alignItems": "center", "flex": "1"}),
+            html.Div([
+                html.Span(f"{len(fnd_recs)} asks", style={
+                    "fontSize": "0.7rem", "fontWeight": "700", "color": UVA_ORANGE,
+                    "marginRight": "12px",
+                }),
+                html.Span(f"{high_ct} high priority", style={
+                    "fontSize": "0.7rem", "fontWeight": "700", "color": "#C62828",
+                    "marginRight": "12px",
+                }),
+                html.Span(f"{val_str} pipeline", style={
+                    "fontSize": "0.7rem", "fontWeight": "700", "color": "#2E7D32",
+                }),
+            ]),
+        ], style={"display": "flex", "justifyContent": "space-between",
+                  "alignItems": "center", "marginBottom": "16px"}),
+        html.Div(cards),
+    ], style={
+        "background": "linear-gradient(135deg, rgba(35,45,75,0.03) 0%, rgba(229,114,0,0.02) 100%)",
+        "border": f"1px solid {BORDER}",
+        "borderRadius": "10px",
+        "padding": "18px 20px",
+        "marginBottom": "20px",
+    })
+
+
 # ── Layout ─────────────────────────────────────────────────────────────────────
 layout = html.Div([
     html.Div([
@@ -227,6 +395,9 @@ layout = html.Div([
         ], md=3),
     ], className="filter-row mb-3"),
 
+    # Foundation Ask Strategy spotlight (shown when category = Foundation or All)
+    html.Div(id="rec-foundation-spotlight", className="mb-3"),
+
     # Status board (kanban) + value chart
     html.Div(id="rec-status-board", className="mb-3"),
     dbc.Row([
@@ -248,11 +419,12 @@ layout = html.Div([
 
 
 @callback(
-    Output("rec-status-board",     "children"),
-    Output("rec-value-chart",      "figure"),
-    Output("rec-timeline",         "figure"),
-    Output("rec-cards-container",  "children"),
-    Output("rec-kpis",             "children"),
+    Output("rec-foundation-spotlight", "children"),
+    Output("rec-status-board",         "children"),
+    Output("rec-value-chart",          "figure"),
+    Output("rec-timeline",             "figure"),
+    Output("rec-cards-container",      "children"),
+    Output("rec-kpis",                 "children"),
     Input("rec-cat-dd",    "value"),
     Input("rec-pri-dd",    "value"),
     Input("rec-status-dd", "value"),
@@ -265,6 +437,12 @@ def update_recs(cat, pri, status):
     if cat    != "All": recs_f = recs_f[recs_f["category"] == cat]
     if pri    != "All": recs_f = recs_f[recs_f["priority"] == pri]
     if status != "All": recs_f = recs_f[recs_f["status"]   == status]
+
+    # Foundation spotlight — show when viewing All or Foundation category
+    fnd_spotlight = foundation_rec_spotlight(recs_f, df_raw) if cat in ("All", "Foundation") else html.Span()
+
+    # Non-foundation recs for kanban/charts (exclude Foundation category from the generic board)
+    recs_non_fnd = recs_f[recs_f["category"] != "Foundation"]
 
     total_val = recs_f["est_value_k"].sum()
     high_ct   = (recs_f["priority"] == "High").sum()
@@ -293,14 +471,17 @@ def update_recs(cat, pri, status):
 
     cards = dbc.Row([
         dbc.Col(rec_card(row, df_raw), md=6, className="mb-3")
-        for _, row in recs_f.iterrows()
-    ]) if not recs_f.empty else html.Div("No recommendations match the selected filters.",
-                                         className="placeholder-text")
+        for _, row in recs_non_fnd.iterrows()
+    ]) if not recs_non_fnd.empty else html.Div(
+        "No recommendations match the selected filters.",
+        className="placeholder-text"
+    )
 
     return (
-        rec_status_board(recs_f),
+        fnd_spotlight,
+        rec_status_board(recs_non_fnd),
         value_by_category_chart(recs),
-        timeline_chart(recs_f),
+        timeline_chart(recs_non_fnd),
         cards,
         kpis,
     )

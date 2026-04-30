@@ -382,6 +382,23 @@ def sp_partner_alignment() -> pd.DataFrame:
     return pd.DataFrame({"priority": SP_LABELS, "mean_score": means, "max_score": [10]*6})
 
 
+def load_foundation_grants(partner_id: int) -> pd.DataFrame:
+    """Return grant-level records for a foundation partner, newest-first."""
+    with engine.connect() as conn:
+        df = pd.read_sql(
+            text("""
+                SELECT fiscal_year, amount_k, grant_title, program_area,
+                       recipient_school, grant_type, notes
+                FROM foundation_grants
+                WHERE partner_id = :pid
+                ORDER BY fiscal_year DESC, amount_k DESC
+            """),
+            conn,
+            params={"pid": partner_id},
+        )
+    return df
+
+
 # ── Economic Impact (PPE.pdf data) ────────────────────────────────────────────
 PPE_STATS = {
     "total_impact_b":   11.9,

@@ -18,7 +18,7 @@ from queries import (
     RELATIONSHIP_METRICS, STRATEGIC_METRICS, ALL_METRICS,
     PARTNER_TIERS, TIER_COLORS, SECTOR_COLORS, get_tier,
     CORPORATE_SECTORS, FOUNDATION_SECTORS,
-    PRIORITY_FOUNDATIONS,
+    PRIORITY_FOUNDATIONS, load_foundation_grants,
 )
 from charts import (
     UVA_NAVY, UVA_ORANGE, LIGHT_BG, CARD_BG, TEXT_DARK, TEXT_MID, TEXT_LIGHT,
@@ -252,6 +252,281 @@ def metric_heatmap(scored, sector="All", n=20):
     return fig
 
 
+# ── Foundation profile panel ───────────────────────────────────────────────────
+def _grant_history_section(partner_row):
+    """
+    Renders a collapsible grant history table for a foundation partner.
+    Shows UVA-received grants sorted by year desc, then national context grants.
+    """
+    pid = partner_row.get("id")
+    if not pid:
+        return html.Span()
+
+    try:
+        grants_df = load_foundation_grants(int(pid))
+    except Exception:
+        return html.Span()
+
+    nat_grants = grants_df[grants_df["grant_type"] == "National Context"]
+
+    if nat_grants.empty:
+        return html.Span()
+
+    def _fmt_k(val):
+        if val is None:
+            return "—"
+        v = float(val)
+        if v >= 1000:
+            return f"${v/1000:.1f}M"
+        return f"${v:,.0f}K"
+
+    def _grant_rows(df, row_bg):
+        rows = []
+        for _, g in df.iterrows():
+            yr   = str(int(g["fiscal_year"])) if g["fiscal_year"] else "—"
+            amt  = _fmt_k(g["amount_k"])
+            title = g["grant_title"] or "—"
+            area  = g["program_area"] or "—"
+            school = g["recipient_school"] or "—"
+            rows.append(html.Tr([
+                html.Td(yr,    style={"padding": "5px 8px", "whiteSpace": "nowrap",
+                                       "fontWeight": "700", "color": UVA_NAVY,
+                                       "fontSize": "0.72rem"}),
+                html.Td(amt,   style={"padding": "5px 8px", "whiteSpace": "nowrap",
+                                       "fontWeight": "700", "color": UVA_ORANGE,
+                                       "fontSize": "0.72rem", "textAlign": "right"}),
+                html.Td(title, style={"padding": "5px 8px", "fontSize": "0.72rem",
+                                       "color": TEXT_DARK}),
+                html.Td(area,  style={"padding": "5px 8px", "fontSize": "0.7rem",
+                                       "color": TEXT_MID}),
+                html.Td(school if school != "None" else "—",
+                               style={"padding": "5px 8px", "fontSize": "0.7rem",
+                                       "color": TEXT_MID, "fontStyle": "italic"}),
+            ], style={"background": row_bg, "borderBottom": f"1px solid {BORDER}"}))
+        return rows
+
+    col_header = lambda label: html.Th(label, style={
+        "padding": "5px 8px", "background": UVA_NAVY, "color": "#FFFFFF",
+        "fontSize": "0.68rem", "fontWeight": "700", "textTransform": "uppercase",
+        "letterSpacing": "0.05em", "whiteSpace": "nowrap",
+    })
+
+    def _table_block(df, section_label, accent_color):
+        if df.empty:
+            return html.Span()
+        rows = _grant_rows(df, CARD_BG)
+        total_k = df["amount_k"].sum()
+        return html.Div([
+            html.Div([
+                html.Span(section_label, style={
+                    "fontSize": "0.68rem", "fontWeight": "700",
+                    "color": accent_color, "textTransform": "uppercase",
+                    "letterSpacing": "0.06em",
+                }),
+                html.Span(f"  {len(df)} grant{'s' if len(df) != 1 else ''}  •  {_fmt_k(total_k)} total",
+                          style={"fontSize": "0.67rem", "color": TEXT_MID, "marginLeft": "8px"}),
+            ], style={"marginBottom": "6px"}),
+            html.Div(
+                html.Table([
+                    html.Thead(html.Tr([
+                        col_header("Year"),
+                        col_header("Amount"),
+                        col_header("Grant Title"),
+                        col_header("Program Area"),
+                        col_header("School / Unit"),
+                    ])),
+                    html.Tbody(rows),
+                ], style={"width": "100%", "borderCollapse": "collapse",
+                          "fontSize": "0.72rem"}),
+                style={"overflowX": "auto", "borderRadius": "6px",
+                       "border": f"1px solid {BORDER}"},
+            ),
+        ], style={"marginBottom": "12px"})
+
+    nat_block = _table_block(nat_grants, "National Giving Context", TEXT_MID)
+
+    return html.Div([
+        html.Div([
+            html.Span("📋", style={"fontSize": "0.85rem", "marginRight": "6px"}),
+            html.Span("GRANT HISTORY", style={
+                "fontFamily": "var(--font-brand)", "fontWeight": "800",
+                "fontSize": "0.72rem", "color": UVA_NAVY, "letterSpacing": "0.08em",
+            }),
+        ], style={"marginBottom": "10px", "marginTop": "14px",
+                  "borderTop": f"1px solid {BORDER}", "paddingTop": "12px"}),
+        nat_block,
+    ])
+
+
+def _foundation_profile_panel(partner_row):
+    """
+    Structured 990/financial profile for foundation partners.
+    Parses key data from revenue_b, philanthropy_5yr, employees_k, and notes.
+    """
+    name    = partner_row.get("name", "")
+    notes   = partner_row.get("notes", "") or ""
+    rev_b   = partner_row.get("revenue_b", 0) or 0      # total assets / endowment proxy $B
+    p5yr    = partner_row.get("philanthropy_5yr", 0) or 0  # giving received by UVA (5yr) $
+    emp_k   = partner_row.get("employees_k", 0) or 0    # staff FTE (thousands)
+    city    = partner_row.get("hq_city", "") or ""
+    state   = partner_row.get("hq_state", "") or ""
+    sector  = partner_row.get("sector", "") or ""
+
+    # Parse EIN from notes field (pattern: "EIN: XX-XXXXXXX")
+    import re
+    ein_match = re.search(r"EIN[:\s]+(\d{2}-\d{7})", notes)
+    ein = ein_match.group(1) if ein_match else None
+
+    # Parse annual giving from notes (pattern: "~$XXM annual giving" or "$XB+ annual giving")
+    annual_match = re.search(r"\$(\d+\.?\d*)[MBK]\+?\s*annual giving", notes, re.IGNORECASE)
+    annual_giving_str = None
+    if annual_match:
+        unit_char = notes[annual_match.start() + len(annual_match.group(0)) - len("annual giving") - 2]
+        # Just grab the full match text
+        annual_giving_str = re.search(r"(\~?\$[\d\.]+[MBK]\+?)\s*annual giving", notes, re.IGNORECASE)
+        if annual_giving_str:
+            annual_giving_str = annual_giving_str.group(1)
+
+    # UVA giving received — format nicely
+    if p5yr >= 1_000_000:
+        p5yr_fmt = f"${p5yr/1_000_000:.1f}M"
+    elif p5yr >= 1_000:
+        p5yr_fmt = f"${p5yr/1_000:.0f}K"
+    else:
+        p5yr_fmt = f"${p5yr:,.0f}" if p5yr > 0 else "—"
+
+    # Endowment / assets
+    if rev_b >= 1:
+        assets_fmt = f"${rev_b:.1f}B"
+    elif rev_b > 0:
+        assets_fmt = f"${rev_b*1000:.0f}M"
+    else:
+        assets_fmt = "—"
+
+    # Staff
+    if emp_k >= 1:
+        staff_fmt = f"{emp_k:.1f}K staff"
+    elif emp_k > 0:
+        staff_fmt = f"{int(emp_k*1000)} staff"
+    else:
+        staff_fmt = "—"
+
+    # Build KPI pills
+    pills = []
+    pill_data = [
+        ("Endowment / Assets", assets_fmt, UVA_NAVY),
+        ("Annual Giving", annual_giving_str or "See notes", UVA_ORANGE),
+        ("UVA Gifts Recv'd (5yr)", p5yr_fmt, "#2E7D32"),
+        ("Staff", staff_fmt, "#6A1B9A"),
+    ]
+    for label, val, color in pill_data:
+        pills.append(html.Div([
+            html.Div(val, style={
+                "fontFamily": "var(--font-brand)", "fontWeight": "800",
+                "fontSize": "1.1rem", "color": color, "lineHeight": "1.1",
+            }),
+            html.Div(label, style={
+                "fontSize": "0.67rem", "color": TEXT_MID,
+                "fontWeight": "600", "marginTop": "2px",
+                "textTransform": "uppercase", "letterSpacing": "0.04em",
+            }),
+        ], style={
+            "background": CARD_BG,
+            "border": f"1px solid {BORDER}",
+            "borderTop": f"3px solid {color}",
+            "borderRadius": "6px",
+            "padding": "10px 14px",
+            "flex": "1",
+            "minWidth": "110px",
+        }))
+
+    # EIN + location row
+    meta_items = []
+    if ein:
+        meta_items.append(html.Span([
+            html.Span("EIN ", style={"fontWeight": "700", "color": TEXT_MID}),
+            html.Span(ein, style={"fontFamily": "monospace", "color": UVA_NAVY}),
+        ], style={"marginRight": "16px"}))
+    if city or state:
+        meta_items.append(html.Span([
+            html.Span("HQ ", style={"fontWeight": "700", "color": TEXT_MID}),
+            html.Span(f"{city}, {state}".strip(", "), style={"color": UVA_NAVY}),
+        ], style={"marginRight": "16px"}))
+    if sector:
+        sector_color = SECTOR_COLORS.get(sector, TEXT_MID)
+        meta_items.append(html.Span([
+            html.Span("Focus ", style={"fontWeight": "700", "color": TEXT_MID}),
+            html.Span(sector, style={"color": sector_color, "fontWeight": "700"}),
+        ]))
+
+    # Priority flag
+    is_priority = name in PRIORITY_FOUNDATIONS
+    priority_badge = html.Span([
+        html.Span("★", style={"color": UVA_ORANGE, "marginRight": "4px"}),
+        html.Span("CFR Priority Foundation", style={
+            "fontSize": "0.65rem", "fontWeight": "700",
+            "color": UVA_ORANGE, "letterSpacing": "0.05em",
+        }),
+    ], style={
+        "background": "rgba(229,114,0,0.08)",
+        "border": f"1px solid rgba(229,114,0,0.3)",
+        "borderRadius": "10px", "padding": "2px 10px",
+        "display": "inline-flex", "alignItems": "center",
+    }) if is_priority else html.Span()
+
+    return html.Div([
+        # Header
+        html.Div([
+            html.Div([
+                html.Span("🏛️", style={"fontSize": "0.9rem", "marginRight": "6px"}),
+                html.Span("FOUNDATION PROFILE", style={
+                    "fontFamily": "var(--font-brand)", "fontWeight": "800",
+                    "fontSize": "0.72rem", "color": UVA_NAVY, "letterSpacing": "0.08em",
+                }),
+            ], style={"display": "flex", "alignItems": "center"}),
+            priority_badge,
+        ], style={"display": "flex", "justifyContent": "space-between",
+                  "alignItems": "center", "marginBottom": "12px"}),
+
+        # KPI pills
+        html.Div(pills, style={
+            "display": "flex", "flexWrap": "wrap", "gap": "8px",
+            "marginBottom": "12px",
+        }),
+
+        # Meta row
+        html.Div(meta_items, style={
+            "fontSize": "0.75rem", "marginBottom": "10px",
+            "display": "flex", "flexWrap": "wrap", "gap": "4px",
+        }) if meta_items else html.Span(),
+
+        # Notes excerpt (stripped of EIN — already shown above)
+        html.Div([
+            html.Span("990 / Profile Notes: ", style={
+                "fontWeight": "700", "fontSize": "0.72rem",
+                "color": TEXT_MID, "marginRight": "4px",
+            }),
+            html.Span(notes, style={
+                "fontSize": "0.72rem", "color": TEXT_DARK, "lineHeight": "1.5",
+            }),
+        ], style={
+            "background": LIGHT_BG, "borderRadius": "6px",
+            "padding": "10px 12px", "lineHeight": "1.5",
+        }) if notes else html.Span(),
+
+        # ── Grant History ──────────────────────────────────────────────────
+        _grant_history_section(partner_row),
+
+    ], style={
+        "background": "linear-gradient(135deg, rgba(35,45,75,0.03) 0%, rgba(229,114,0,0.02) 100%)",
+        "border": f"1px solid {BORDER}",
+        "borderLeft": f"4px solid {UVA_NAVY}",
+        "borderRadius": "8px",
+        "padding": "16px 18px",
+        "marginBottom": "16px",
+    })
+
+
 # ── Partner detail ─────────────────────────────────────────────────────────────
 def partner_detail_card(partner_row, scored_row):
     score = scored_row["composite_score"]
@@ -259,6 +534,7 @@ def partner_detail_card(partner_row, scored_row):
     strat = scored_row["strategic_score"]
     tier, tier_color, action = get_tier(score)
     rank  = int(scored_row["rank"])
+    is_foundation = partner_row.get("partner_type") == "Foundation"
 
     # Metric breakdown
     prefix = "pct_" if "pct_sponsored_research_5yr" in scored_row.index else "jdg_"
@@ -348,12 +624,16 @@ def partner_detail_card(partner_row, scored_row):
                          style={"color": UVA_ORANGE}),
                 html.Div("Strategic Opportunity", className="score-pill-label"),
             ], className="score-pill"), md=4),
+            # Est. Annual Value pill — corporate partners only (procurement metric)
             dbc.Col(html.Div([
                 html.Div(f"${partner_row.get('est_annual_value_k',0)/1000:.1f}M" if partner_row.get('est_annual_value_k',0) >= 1000 else f"${partner_row.get('est_annual_value_k',0):.0f}K",
                          className="score-pill-value", style={"color": "#2E7D32"}),
                 html.Div("Est. Annual Value", className="score-pill-label"),
-            ], className="score-pill"), md=4),
+            ], className="score-pill"), md=4) if not is_foundation else html.Span(),
         ], className="mb-3"),
+
+        # Foundation Profile panel (foundation partners only)
+        _foundation_profile_panel(partner_row) if is_foundation else html.Span(),
 
         # Radar + Breakdown
         dbc.Row([
@@ -373,11 +653,11 @@ def partner_detail_card(partner_row, scored_row):
             ], md=7),
         ]),
 
-        # Notes
+        # Notes (corporate only — foundations show notes in profile panel above)
         html.Div([
             html.Strong("CFR Notes: "),
             html.Span(partner_row.get("notes", "No notes on file.")),
-        ], className="detail-notes mt-3") if partner_row.get("notes") else html.Span(),
+        ], className="detail-notes mt-3") if (partner_row.get("notes") and not is_foundation) else html.Span(),
 
     ], className="detail-card")
 

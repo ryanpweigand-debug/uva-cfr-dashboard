@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "components"))
 
 from queries import (
     load_strategic_priorities, load_scored_partners, sp_partner_alignment,
-    SECTOR_COLORS, SP_COLS, SP_LABELS,
+    SECTOR_COLORS, SP_COLS, SP_LABELS, PRIORITY_FOUNDATIONS,
 )
 from charts import (
     UVA_NAVY, UVA_ORANGE, LIGHT_BG, CARD_BG, TEXT_DARK, TEXT_MID, TEXT_LIGHT,
@@ -22,6 +22,13 @@ from charts import (
 )
 
 dash.register_page(__name__, path="/strategic-plan", name="Strategic Plan", order=2)
+
+_TAB  = dict(backgroundColor="transparent", border="none",
+             borderBottom="3px solid transparent", color=TEXT_MID,
+             fontWeight="600", fontFamily=CHART_FONT, fontSize="0.88rem",
+             padding="12px 24px")
+_TSEL = {**_TAB, "color": UVA_NAVY,
+         "borderBottom": f"3px solid {UVA_ORANGE}", "fontWeight": "700"}
 
 SP_ICONS    = ["🏛️", "🚪", "📊", "👥", "🗄️", "📣"]
 SP_COLORS   = [UVA_NAVY, UVA_ORANGE, "#1565C0", "#2E7D32", "#6A1B9A", "#BF360C"]
@@ -165,15 +172,14 @@ def sp_spotlight_row(name, score, color):
     ], style={"padding": "7px 0", "borderBottom": "1px solid rgba(0,0,0,0.06)"})
 
 
-def sp_partner_spotlight(method="percentile"):
-    df = load_scored_partners(method)
+def sp_partner_spotlight(method="percentile", partner_type="Corporate"):
+    df = load_scored_partners(method, partner_type)
 
     cols = []
     for i, (sp_col, label, icon, color) in enumerate(
         zip(SP_COLS, SP_LABELS, SP_ICONS, SP_COLORS)
     ):
         top5 = df.nlargest(5, sp_col)[["name", sp_col]]
-        short_label = label.replace("SP-0", "SP-").replace("SP-", "").split(" ", 1)[-1]
         code = f"SP-0{i+1}"
 
         rows = [sp_spotlight_row(r["name"], r[sp_col], color)
@@ -207,6 +213,127 @@ def sp_partner_spotlight(method="percentile"):
     return html.Div([
         dbc.Row(cols[:3]),
         dbc.Row(cols[3:]),
+    ])
+
+
+def foundation_sp_summary():
+    """
+    Foundation-specific strategic plan view:
+    Shows how foundation partners map to SP priorities, with a priority watch strip.
+    """
+    df = load_scored_partners("percentile", "Foundation")
+
+    # SP alignment bars (avg score per priority, foundation partners only)
+    sp_rows = []
+    for i, (sp_col, label, icon, color) in enumerate(
+        zip(SP_COLS, SP_LABELS, SP_ICONS, SP_COLORS)
+    ):
+        avg = df[sp_col].mean() if not df.empty else 0
+        pct = avg / 10 * 100
+        sp_rows.append(html.Div([
+            html.Div([
+                html.Span(icon, style={"marginRight": "6px", "fontSize": "0.85rem"}),
+                html.Span(f"SP-0{i+1}", style={
+                    "fontFamily": "var(--font-brand)", "fontWeight": "800",
+                    "fontSize": "0.72rem", "color": color, "marginRight": "6px",
+                }),
+                html.Span(label.split(" ", 1)[-1], style={
+                    "fontSize": "0.7rem", "color": TEXT_MID, "fontWeight": "600",
+                }),
+            ], style={"display": "flex", "alignItems": "center",
+                      "marginBottom": "4px", "flexWrap": "wrap"}),
+            html.Div([
+                html.Div(
+                    html.Div(style={
+                        "width": f"{max(pct, 2):.1f}%", "height": "100%",
+                        "background": color, "borderRadius": "3px",
+                        "transition": "width 0.5s ease",
+                    }),
+                    style={
+                        "flex": "1", "height": "8px",
+                        "background": "rgba(0,0,0,0.07)",
+                        "borderRadius": "3px", "overflow": "hidden",
+                    }
+                ),
+                html.Span(f"{avg:.1f}/10", style={
+                    "fontSize": "0.68rem", "fontWeight": "700",
+                    "color": color, "marginLeft": "8px", "flexShrink": "0",
+                }),
+            ], style={"display": "flex", "alignItems": "center"}),
+        ], style={"marginBottom": "12px"}))
+
+    # Top 5 foundations by composite score
+    top5 = df.nlargest(5, "composite_score")[["name", "composite_score", "tier", "tier_color"]]
+    top_rows = []
+    for _, r in top5.iterrows():
+        top_rows.append(html.Div([
+            html.Div([
+                html.Span(r["name"], style={
+                    "fontWeight": "600", "fontSize": "0.78rem",
+                    "color": UVA_NAVY, "flex": "1",
+                    "whiteSpace": "nowrap", "overflow": "hidden",
+                    "textOverflow": "ellipsis",
+                }),
+                html.Span(r["tier"], style={
+                    "background": r["tier_color"], "color": "#fff",
+                    "fontSize": "0.55rem", "fontWeight": "700",
+                    "padding": "1px 6px", "borderRadius": "3px",
+                    "marginLeft": "8px", "flexShrink": "0",
+                }),
+                html.Span(f"{r['composite_score']:.0f}pt", style={
+                    "fontSize": "0.68rem", "color": r["tier_color"],
+                    "fontWeight": "700", "marginLeft": "6px", "flexShrink": "0",
+                }),
+            ], style={"display": "flex", "alignItems": "center"}),
+        ], style={
+            "padding": "7px 0",
+            "borderBottom": f"1px solid {BORDER}",
+        }))
+
+    # Priority coverage — how many of 16 priority foundations are active
+    priority_names_lower = {n.strip().lower() for n in PRIORITY_FOUNDATIONS}
+    active_names_lower   = set(df["name"].str.strip().str.lower())
+    covered = len(priority_names_lower & active_names_lower)
+    total_priority = len(PRIORITY_FOUNDATIONS)
+
+    return dbc.Row([
+        dbc.Col([
+            html.Div([
+                html.Div("SP PRIORITY ALIGNMENT", className="section-eyebrow mb-3"),
+                html.Div(sp_rows),
+                html.Div(
+                    "Average SP alignment score across all active foundation partners (0–10).",
+                    style={"fontSize": "0.62rem", "color": TEXT_LIGHT,
+                           "marginTop": "8px", "fontStyle": "italic"},
+                ),
+            ], style={
+                "background": CARD_BG, "border": f"1px solid {BORDER}",
+                "borderRadius": "8px", "padding": "16px 18px", "height": "100%",
+            }),
+        ], md=6, className="mb-3"),
+
+        dbc.Col([
+            dbc.Row([
+                dbc.Col(html.Div([
+                    html.Div(str(len(df)), className="stat-value",
+                             style={"color": UVA_NAVY}),
+                    html.Div("Active Foundations", className="stat-label"),
+                ], className="stat-card"), md=6, className="mb-3"),
+                dbc.Col(html.Div([
+                    html.Div(f"{covered}/{total_priority}", className="stat-value",
+                             style={"color": UVA_ORANGE}),
+                    html.Div("Priority Foundations", className="stat-label"),
+                    html.Div("in active pipeline", className="stat-sub"),
+                ], className="stat-card"), md=6, className="mb-3"),
+            ]),
+            html.Div([
+                html.Div("TOP FOUNDATIONS BY SCORE", className="section-eyebrow mb-2"),
+                html.Div(top_rows),
+            ], style={
+                "background": CARD_BG, "border": f"1px solid {BORDER}",
+                "borderRadius": "8px", "padding": "14px 16px",
+            }),
+        ], md=6, className="mb-3"),
     ])
 
 
@@ -353,6 +480,17 @@ def build_layout():
                     ),
                 ], md=3),
             ], className="mb-3"),
+            dcc.Tabs(
+                id="sp-type-tabs", value="Corporate",
+                style={"borderBottom": f"1px solid {BORDER}", "marginBottom": "20px",
+                       "backgroundColor": CARD_BG},
+                children=[
+                    dcc.Tab(label="🏢  Corporate Relations", value="Corporate",
+                            style=_TAB, selected_style=_TSEL),
+                    dcc.Tab(label="🏛️  Foundation Relations", value="Foundation",
+                            style=_TAB, selected_style=_TSEL),
+                ],
+            ),
             html.Div(id="sp-partner-spotlight"),
         ], className="section-block"),
 
@@ -364,7 +502,10 @@ layout = build_layout  # callable — Dash calls this lazily at request time
 
 @callback(
     Output("sp-partner-spotlight", "children"),
-    Input("sp-method-dd", "value"),
+    Input("sp-method-dd",   "value"),
+    Input("sp-type-tabs",   "value"),
 )
-def sp_partner_chart(method):
-    return sp_partner_spotlight(method)
+def sp_partner_chart(method, tab):
+    if tab == "Foundation":
+        return foundation_sp_summary()
+    return sp_partner_spotlight(method, "Corporate")

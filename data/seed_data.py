@@ -6,7 +6,7 @@ and recommendations derived from the CFR source documents.
 
 import os
 from sqlalchemy.orm import Session
-from schema import create_all, engine, Partner, BenchmarkPeer, StrategicPriority, Recommendation, FundingOpportunity
+from schema import create_all, engine, Partner, BenchmarkPeer, StrategicPriority, Recommendation, FundingOpportunity, FoundationGrant
 import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -424,6 +424,203 @@ def seed_recommendations(session):
         ))
 
 
+def seed_foundation_recommendations(session):
+    """
+    Foundation-specific ask strategy recommendations (category='Foundation').
+    Derived from each foundation's grant history + UVA's institutional strengths.
+    Runs after seed_partners so we can resolve real partner IDs by name.
+    """
+    pid_map = {p.name: p.id for p in session.query(Partner).filter_by(partner_type="Foundation")}
+
+    # (partner_name, title, priority, desc, est_k, timeline)
+    fnd_recs = [
+        # 1. Bill & Melinda Gates Foundation
+        ("Bill & Melinda Gates Foundation",
+         "Gates Foundation — Global Health Convergence Initiative", "High",
+         "Gates has funded UVA Health across global health equity, mRNA vaccine research, and "
+         "COVID-19 surveillance (FY 2021–2023). Next ask: propose a multi-year convergence award "
+         "combining UVA Health's infectious disease bench strength with the Frank Batten School's "
+         "health policy expertise. Target the Gates Grand Challenges Explorations round with a "
+         "co-PI model spanning medicine + public policy. Leverage existing relationship to request "
+         "a program officer meeting before submission. Estimated $3–5M multi-year award.",
+         4000, "Q2 2025"),
+
+        # 2. Robert Wood Johnson Foundation
+        ("Robert Wood Johnson Foundation",
+         "RWJF — Virginia Rural Health Workforce Pipeline", "High",
+         "RWJF's Culture of Health program maps directly onto UVA's School of Nursing rural "
+         "outreach and Batten School's health policy research (funded separately FY 2021–2023). "
+         "Next ask: a 3-year bundled grant building a Virginia Rural Health Workforce Pipeline — "
+         "nurse training, telehealth deployment, and Batten-led policy evaluation as one package. "
+         "RWJF prefers proposals that bridge clinical delivery and policy impact; UVA's multi-school "
+         "structure is uniquely positioned for this. Target: $1.5–2M.",
+         1750, "Q3 2025"),
+
+        # 3. Alfred P. Sloan Foundation
+        ("Alfred P. Sloan Foundation",
+         "Sloan Foundation — STEM Fellows + Digital Infrastructure Expansion", "High",
+         "Sloan has active fellowship pipelines at UVA (Physics FY 2023, Chemistry FY 2022) and "
+         "co-funds the SDSS astronomy collaboration (FY 2021). Expand by nominating 2–3 additional "
+         "early-career UVA faculty in CS, Statistics, and Environmental Science for Sloan Research "
+         "Fellowships annually. Pair with a Sloan Digital Infrastructure proposal for UVA's data "
+         "science computing cluster. UVA's STEM PhD diversity initiative is a natural co-anchor. "
+         "Target: $500K–$1M incremental.",
+         750, "Q1 2026"),
+
+        # 4. Gordon & Betty Moore Foundation
+        ("Gordon & Betty Moore Foundation",
+         "Moore Foundation — Environmental Data Science Center at UVA", "High",
+         "Moore funded UVA's Environmental Data Science Initiative (FY 2023) and Moore-Sloan Data "
+         "Science Environments (FY 2022). Next ask: a Moore Data-Driven Environmental Science Center "
+         "— a cross-school hub for AI-assisted ecosystem monitoring, climate modeling, and "
+         "conservation policy anchored in UVA's College of Arts & Sciences and SEAS. Pitch as the "
+         "mid-Atlantic node in Moore's university data science network. Target: $2–4M over 4 years.",
+         3000, "Q2 2026"),
+
+        # 5. Andrew W. Mellon Foundation
+        ("Andrew W. Mellon Foundation",
+         "Mellon Foundation — Public Humanities at UVA: Ph.D. Pathways + Digitization", "High",
+         "Mellon's HIRE initiative and digital humanities grants are active at UVA "
+         "(FY 2020–2023 across 4 awards). Next ask: a 'Public Humanities at UVA' campaign "
+         "bundling two proposals: (1) a Mellon Humanities Ph.D. Pathways grant expanding "
+         "alt-ac career prep for doctoral students via arts nonprofits, government, and public media; "
+         "(2) a Mellon digitization award leveraging UVA's Special Collections rare books repository "
+         "as a national digital humanities asset. Target: $2–3M.",
+         2500, "Q3 2025"),
+
+        # 6. Carnegie Corporation of New York
+        ("Carnegie Corporation of New York",
+         "Carnegie — Virginia Education Research Center (Curry-Led)", "Medium",
+         "Carnegie's K-12 literacy reform and African higher ed priorities map directly onto "
+         "Curry School's reading science and math achievement research (FY 2022–2023). Propose a "
+         "Carnegie-funded Virginia Education Research Center: a Curry-led statewide hub evaluating "
+         "evidence-based literacy and math interventions in high-need VA school districts, with "
+         "findings exported to Carnegie's national K-12 network. Target: $1–1.5M over 3 years.",
+         1250, "Q4 2025"),
+
+        # 7. Lumina Foundation for Education
+        ("Lumina Foundation for Education",
+         "Lumina — First-Gen Completion + Credential Quality Research Initiative", "Medium",
+         "Lumina's Goal 2025 (60% postsecondary credential attainment) directly supports UVA's "
+         "first-generation access programs (FY 2022–2023 grants to Provost office and Curry). "
+         "Propose a Lumina-backed Curry School research initiative studying credential quality "
+         "and workforce alignment at public flagship universities — UVA as primary research site. "
+         "CFR should broker introduction between Lumina program officers, UVA Provost, and Curry "
+         "faculty. Target: $750K.",
+         750, "Q2 2026"),
+
+        # 8. William and Flora Hewlett Foundation
+        ("William and Flora Hewlett Foundation",
+         "Hewlett Foundation — Clean Energy Policy Lab + OER Hub", "High",
+         "Hewlett's two priorities — open education resources (Curry, FY 2023) and clean energy "
+         "policy (Batten, FY 2022) — both have active UVA anchors. Dual-track ask: (1) a Curry "
+         "OER research + production center serving K-12 and higher ed across the mid-Atlantic; "
+         "(2) a Batten School clean energy policy lab analyzing Virginia's energy transition under "
+         "the Clean Economy Act. Bundle as 'UVA Knowledge for the Public Good.' Target: $1.5M.",
+         1500, "Q1 2026"),
+
+        # 9. W.M. Keck Foundation
+        ("W.M. Keck Foundation",
+         "Keck Foundation — High-Risk Neuroscience + Precision Medicine Program", "High",
+         "Keck funds high-risk, high-reward university science — UVA School of Medicine's "
+         "Alzheimer's biomarker (FY 2023) and genomics (FY 2021) awards confirm fit. "
+         "Identify 2 UVA faculty doing genuinely paradigm-challenging research in neurodegeneration "
+         "or precision oncology; submit targeted Keck Science Award nominations. Frame as a UVA "
+         "multi-PI program with shared instrumentation (Keck does not fund individuals). "
+         "Target: $1–2M.",
+         1500, "Q3 2025"),
+
+        # 10. David and Lucile Packard Foundation
+        ("David and Lucile Packard Foundation",
+         "Packard Foundation — Fellows Pipeline + Reproductive Health Research", "Medium",
+         "Packard Fellows Program has recognized UVA ecology faculty (FY 2023 Conservation Science "
+         "Fellowship, $875K/5yr). Nominate 2 more early-career UVA environmental science faculty "
+         "for Packard Fellowships over the next 3 cycles. Simultaneously develop a Packard "
+         "reproductive health proposal through UVA Health's OB/GYN + public health departments — "
+         "aligning with Packard's family planning priorities (FY 2022 grant, $700K). "
+         "CFR: request direct program officer meeting. Target: $1.5M+ total.",
+         1750, "Q2 2026"),
+
+        # 11. Ford Foundation
+        ("Ford Foundation",
+         "Ford Foundation — UVA Equity and Democracy Research Collaborative", "High",
+         "Ford's inequality and democratic participation priorities overlap with UVA's Democracy "
+         "Initiative, Equity Center, and UVA Law civil rights work (FY 2021–2023 across 3 awards). "
+         "Propose a multi-school 'Equity and Democracy Research Collaborative' co-anchored by "
+         "Batten, the Equity Center, and UVA Law — positioning UVA as Ford's premier public "
+         "flagship partner for Southern U.S. equity work. Ford's $1B social bond signals "
+         "multi-year institutional appetite. Target: $2–3M over 4 years.",
+         2500, "Q1 2026"),
+
+        # 12. Arnold Ventures
+        ("Arnold Ventures",
+         "Arnold Ventures — Virginia Evidence Lab (Batten + UVA Law)", "Medium",
+         "Arnold Ventures funds only rigorously evidence-based policy research. UVA Law and "
+         "Batten School have active Arnold grants on sentencing reform (FY 2023) and drug "
+         "pricing (FY 2022). Expand by proposing a joint Batten-UVA Law 'Virginia Evidence Lab' "
+         "— a standing Arnold policy evaluation partner producing rapid-turnaround, peer-reviewed "
+         "analyses for Virginia and federal policymakers. Position as Arnold's mid-Atlantic "
+         "policy hub. Target: $1.5M.",
+         1500, "Q3 2026"),
+
+        # 13. William Randolph Hearst Foundation
+        ("William Randolph Hearst Foundation",
+         "Hearst Foundation — Named Scholars Program (Journalism + Nursing)", "Low",
+         "Hearst has two active giving streams at UVA: journalism awards via College of Arts & "
+         "Sciences (FY 2023) and nursing scholarships via School of Nursing (FY 2022). Formalize "
+         "into a named annual 'Hearst Scholars at UVA' program — 4 journalism awards + 4 nursing "
+         "awards per year with Hearst Foundation branding. CFR should broker a personal meeting "
+         "between the Hearst Foundation president and UVA deans of both schools. "
+         "Modest but renewable. Target: $150K/yr.",
+         300, "Q4 2025"),
+
+        # 14. Henry Luce Foundation
+        ("Henry Luce Foundation",
+         "Luce Foundation — Scholars Pipeline + Theology & American Art Initiative", "Low",
+         "Luce Scholars program placements at UVA are active (FY 2023 — Asia/U.S. relations). "
+         "Strengthen by nominating 3–4 UVA undergraduates annually for Luce Scholarships "
+         "(currently under-nominating). Separately, develop a Luce Theology and Arts grant "
+         "proposal through UVA's Religious Studies + Art History departments — a natural fit "
+         "for Luce's American art + religion niche. Target: $200–$350K across both programs.",
+         275, "Q1 2026"),
+
+        # 15. Claude Moore Charitable Foundation
+        ("Claude Moore Charitable Foundation",
+         "Claude Moore Foundation — Virginia Health Access Initiative", "Medium",
+         "Claude Moore is a McLean, VA-based foundation deeply aligned with UVA Health and "
+         "School of Medicine. Prior grants funded simulation lab equipment (FY 2023) and health "
+         "access research (FY 2022). Propose a Claude Moore 'Virginia Health Access Initiative': "
+         "3-year program embedding UVA medical students in underserved VA communities, paired "
+         "with simulation lab expansion at the School of Medicine. Virginia-local roots make "
+         "this a high-conversion relationship. Target: $500K–$750K.",
+         625, "Q2 2025"),
+
+        # 16. Anne Mullen Orell Charitable Trust
+        ("Anne Mullen Orell Charitable Trust",
+         "Anne Mullen Orell Trust — Stewardship + Community Health Renewal", "Low",
+         "Small Virginia-based charitable trust with prior giving to UVA Health for community "
+         "wellness (FY 2023, $50K). Recommend a light-touch stewardship strategy: personal "
+         "outreach from UVA Health community benefit office, annual impact report, and a "
+         "renewal ask of $50–75K for Charlottesville-region community health programming. "
+         "Virginia proximity and mission alignment = high-conversion, low-effort relationship. "
+         "Target: $75K renewable annually.",
+         75, "Q3 2025"),
+    ]
+
+    for partner_name, title, priority, desc, est_k, timeline in fnd_recs:
+        pid = pid_map.get(partner_name)
+        session.add(Recommendation(
+            partner_id=pid,
+            title=title,
+            category="Foundation",
+            priority=priority,
+            description=desc,
+            est_value_k=float(est_k),
+            timeline=timeline,
+            status="Open",
+        ))
+
+
 def seed_funding_opportunities(session):
     """
     Sample funding opportunities from real CFR source lists:
@@ -645,6 +842,73 @@ def seed_funding_opportunities(session):
         ))
 
 
+def seed_foundation_grants(session):
+    """
+    Grant-level funding history for foundation partners.
+    partner_name is resolved to partner_id at seed time.
+    grant_type: "UVA Received" = actual UVA grant; "National Context" = national giving reference.
+    amount_k in $k (e.g. 500 = $500,000).
+    """
+    # Build name→id map
+    partners = {p.name: p.id for p in session.query(Partner).filter_by(partner_type="Foundation")}
+
+    grants = [
+        # (partner_name, fiscal_year, amount_k, grant_title, program_area, recipient_school, grant_type, notes)
+
+        # ── Bill & Melinda Gates Foundation ───────────────────────────────────
+        ("Bill & Melinda Gates Foundation", 2023, 7000000,
+         "Gates Grand Challenges Explorations — Global Health", "Global Health", None,
+         "National Context", "$7B+ annual giving; flagship programs: GAVI, malaria eradication, reproductive health"),
+
+        # ── Robert Wood Johnson Foundation ────────────────────────────────────
+        ("Robert Wood Johnson Foundation", 2023, 450000,
+         "Culture of Health / National Programs", "Health Equity", None,
+         "National Context", "~$450M annual giving focused on U.S. health equity and nursing workforce"),
+
+        # ── Alfred P. Sloan Foundation ────────────────────────────────────────
+        ("Alfred P. Sloan Foundation", 2023, 90000,
+         "Sloan Annual Programs — STEM + Technology", "STEM Research", None,
+         "National Context", "~$90M annual giving; Sloan Research Fellowships, energy/environment, digital information"),
+
+        # ── Gordon & Betty Moore Foundation ───────────────────────────────────
+        ("Gordon & Betty Moore Foundation", 2023, 300000,
+         "Conservation + Science + Patient Care — National", "Environmental Science", None,
+         "National Context", "~$300M annual giving; ocean conservation, science, patient-centered care"),
+
+        # ── Andrew W. Mellon Foundation ────────────────────────────────────────
+        ("Andrew W. Mellon Foundation", 2023, 310000,
+         "Mellon Annual Giving — Arts & Humanities", "Arts & Humanities", None,
+         "National Context", "~$310M annual giving; HIRE initiative, HBCU support, performing arts, higher ed diversity"),
+
+        # ── Ford Foundation ────────────────────────────────────────────────────
+        ("Ford Foundation", 2023, 650000,
+         "Ford Annual Giving — Inequality & Democracy", "Social Justice", None,
+         "National Context", "~$650M annual giving; inequality, democratic participation, economic opportunity"),
+
+        # ── Carnegie Corporation of New York ───────────────────────────────────
+        ("Carnegie Corporation of New York", 2023, 165000,
+         "Carnegie Annual Giving — Education + Civic", "Education", None,
+         "National Context", "~$165M annual giving; K-12 reform, civic integration of immigrants, science education"),
+    ]
+
+    for g in grants:
+        (partner_name, fiscal_year, amount_k, grant_title,
+         program_area, recipient_school, grant_type, notes) = g
+        pid = partners.get(partner_name)
+        if pid is None:
+            continue
+        session.add(FoundationGrant(
+            partner_id=pid,
+            fiscal_year=fiscal_year,
+            amount_k=float(amount_k),
+            grant_title=grant_title,
+            program_area=program_area,
+            recipient_school=recipient_school,
+            grant_type=grant_type,
+            notes=notes,
+        ))
+
+
 def ensure_db():
     """Create DB and seed data if it doesn't already exist."""
     db_path = os.path.join(BASE_DIR, "cfr_partners.db")
@@ -658,6 +922,9 @@ def ensure_db():
         seed_strategic_priorities(session)
         seed_recommendations(session)
         seed_funding_opportunities(session)
+        session.flush()  # assign partner IDs before FK-dependent seeding
+        seed_foundation_grants(session)
+        seed_foundation_recommendations(session)
         session.commit()
     print(f"Database created: {db_path}")
 

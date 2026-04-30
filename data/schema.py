@@ -148,6 +148,23 @@ class FundingOpportunity(Base):
     date_added  = Column(String, nullable=True)        # ISO date string
 
 
+class FoundationGrant(Base):
+    """
+    Grant-level funding history for foundation partners.
+    Tracks both UVA-received grants and national giving context.
+    """
+    __tablename__ = "foundation_grants"
+    id               = Column(Integer, primary_key=True, autoincrement=True)
+    partner_id       = Column(Integer, nullable=False)   # FK → partners.id
+    fiscal_year      = Column(Integer, nullable=True)    # e.g. 2023
+    amount_k         = Column(Float,   nullable=True)    # grant amount in $k
+    grant_title      = Column(String,  nullable=True)    # descriptive grant name
+    program_area     = Column(String,  nullable=True)    # e.g. "Global Health", "AI Research"
+    recipient_school = Column(String,  nullable=True)    # e.g. "UVA Health", "Batten School"
+    grant_type       = Column(String,  nullable=True)    # "UVA Received" | "National Context"
+    notes            = Column(Text,    nullable=True)    # additional context
+
+
 def create_all():
     Base.metadata.create_all(engine)
     return engine

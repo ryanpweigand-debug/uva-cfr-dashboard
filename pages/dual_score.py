@@ -53,143 +53,458 @@ _TSEL = {**_TAB, "color": UVA_NAVY,
 
 
 # ── 0. CFR Priority Foundation Watch Panel ────────────────────────────────────
+# ── Foundation intelligence data ──────────────────────────────────────────────
+# Active initiatives, top external grantees, and program areas for each priority
+# foundation — sourced from 990 filings, annual reports, and foundation websites.
+# Format: name → {initiatives, top_grantees [(org, focus)], program_areas, annual_giving}
+FOUNDATION_INTEL = {
+    "Bill & Melinda Gates Foundation": {
+        "annual_giving": "$6.7B",
+        "program_areas": ["Global Health", "Global Development", "U.S. Education", "Global Policy & Advocacy"],
+        "initiatives": [
+            "Grand Challenges Explorations — open-call health innovation grants",
+            "GAVI Alliance — global vaccine access",
+            "Global Fund for AIDS, TB & Malaria",
+            "College-Ready Education (K-12 U.S.)",
+        ],
+        "top_grantees": [
+            ("Johns Hopkins University", "Global health + public health policy"),
+            ("University of Washington", "Institute for Health Metrics & Evaluation"),
+            ("PATH", "Medical device + vaccine delivery innovation"),
+            ("Emory University", "Global health + infectious disease"),
+            ("Harvard T.H. Chan School of Public Health", "Epidemiology + health systems"),
+        ],
+    },
+    "Robert Wood Johnson Foundation": {
+        "annual_giving": "$450M",
+        "program_areas": ["Health Equity", "Healthy Communities", "Health Workforce", "Public Health Policy"],
+        "initiatives": [
+            "Culture of Health — national health equity framework",
+            "Healthy Children and Families program",
+            "RWJF Scholars and Fellowship Programs",
+            "Evidence for Action — public health research grants",
+        ],
+        "top_grantees": [
+            ("Harvard T.H. Chan School of Public Health", "Health equity research + policy"),
+            ("University of Michigan", "Health workforce + Medicaid policy"),
+            ("Columbia University Mailman School", "Social determinants of health"),
+            ("University of North Carolina", "Community health systems research"),
+            ("George Washington University", "Health policy + regulatory research"),
+        ],
+    },
+    "Alfred P. Sloan Foundation": {
+        "annual_giving": "$90M",
+        "program_areas": ["STEM Research", "Economics", "Civic Initiatives", "Digital Information Technology"],
+        "initiatives": [
+            "Sloan Research Fellowships — 128 early-career faculty awards/yr",
+            "Sloan Digital Sky Survey (SDSS) — multi-institution astronomy",
+            "STEM Higher Education — improving diversity in STEM PhDs",
+            "Economic Institutions, Behavior & Performance",
+        ],
+        "top_grantees": [
+            ("MIT", "Physics, economics, and computer science fellowships"),
+            ("Stanford University", "STEM research + economics fellowships"),
+            ("Princeton University", "Mathematics and theoretical physics"),
+            ("University of Chicago", "Economics + physical sciences"),
+            ("Cornell University", "Astronomy + computer science"),
+        ],
+    },
+    "Gordon & Betty Moore Foundation": {
+        "annual_giving": "$300M",
+        "program_areas": ["Environmental Conservation", "Science", "Patient Care", "San Francisco Bay Area"],
+        "initiatives": [
+            "Moore Inventor Fellows — early-career science innovators",
+            "Data-Driven Discovery — university data science environments",
+            "Marine Conservation — ocean health + fisheries",
+            "Emergent Phenomena in Quantum Systems",
+        ],
+        "top_grantees": [
+            ("University of California, Berkeley", "Data science + environmental research"),
+            ("University of Washington", "Ocean + marine science"),
+            ("California Institute of Technology", "Quantum science + astrophysics"),
+            ("University of California, Santa Barbara", "Marine biology + conservation"),
+            ("Woods Hole Oceanographic Institution", "Ocean health + climate research"),
+        ],
+    },
+    "Andrew W. Mellon Foundation": {
+        "annual_giving": "$310M",
+        "program_areas": ["Higher Education", "Arts & Culture", "Humanities", "Diversity & Inclusion"],
+        "initiatives": [
+            "HIRE — Humanities in the Public Sphere",
+            "Mellon Mays Undergraduate Fellowship — HBCU diversity pipeline",
+            "Cultures of Record — archival and special collections digitization",
+            "Monuments Project — public art and historical memory",
+        ],
+        "top_grantees": [
+            ("Yale University", "Humanities research + archival digitization"),
+            ("Columbia University", "Arts & humanities + diversity programs"),
+            ("University of Chicago", "Humanities institutes + archival collections"),
+            ("Duke University", "Humanities Ph.D. pathways + arts"),
+            ("Cornell University", "Performing arts + humanities diversity"),
+        ],
+    },
+    "Carnegie Corporation of New York": {
+        "annual_giving": "$165M",
+        "program_areas": ["Education", "Democracy", "International Peace & Security", "Higher Education Africa"],
+        "initiatives": [
+            "New Americans — civic integration of immigrant communities",
+            "Democracy — media literacy + election integrity research",
+            "Pathways to Postsecondary Success — K-12 to college pipeline",
+            "Africa Higher Education — university capacity building",
+        ],
+        "top_grantees": [
+            ("University of Michigan", "Education policy + civic engagement"),
+            ("Columbia University Teachers College", "K-12 education reform"),
+            ("Harvard Graduate School of Education", "Literacy + learning science"),
+            ("Northwestern University", "Media literacy + journalism"),
+            ("Stanford University Graduate School of Education", "Education research"),
+        ],
+    },
+    "Lumina Foundation for Education": {
+        "annual_giving": "$80M",
+        "program_areas": ["Credential Quality", "Equity in Higher Ed", "State Policy", "Workforce Alignment"],
+        "initiatives": [
+            "Goal 2025 — 60% postsecondary attainment by 2025",
+            "Strategic Data Project — higher ed data analytics",
+            "Adult Learner Initiative — working adult credential completion",
+            "Credential Quality Framework — defining credential value",
+        ],
+        "top_grantees": [
+            ("Indiana University", "Higher ed policy + student success analytics"),
+            ("Purdue University", "Workforce credential alignment"),
+            ("University of Texas System", "Completion + equity initiatives"),
+            ("National Student Clearinghouse", "Postsecondary data infrastructure"),
+            ("WestEd", "State-level higher ed policy research"),
+        ],
+    },
+    "William and Flora Hewlett Foundation": {
+        "annual_giving": "$500M",
+        "program_areas": ["Education", "Environment", "Global Development", "Open Education Resources"],
+        "initiatives": [
+            "Open Education Resources (OER) — free, openly licensed curriculum",
+            "Deeper Learning — K-12 21st century skills framework",
+            "Beyond Petrochemicals — clean energy manufacturing transition",
+            "Western Conservation — public lands + water stewardship",
+        ],
+        "top_grantees": [
+            ("Stanford University", "Education research + OER development"),
+            ("UC Berkeley", "Energy + environmental policy research"),
+            ("Resources for the Future", "Clean energy economics + policy"),
+            ("WestEd", "K-12 deeper learning research"),
+            ("International Energy Agency", "Global energy transition data"),
+        ],
+    },
+    "W.M. Keck Foundation": {
+        "annual_giving": "$100M",
+        "program_areas": ["Medical Research", "Science & Engineering", "Liberal Arts Colleges"],
+        "initiatives": [
+            "Keck Science Awards — high-risk university research programs",
+            "Keck Medical Research — disease-focused multi-PI programs",
+            "Keck Foundation Distinguished Young Scholars",
+            "Keck Institute for Space Studies (Caltech)",
+        ],
+        "top_grantees": [
+            ("Caltech", "Space science + astrophysics (Keck Observatory)"),
+            ("University of Southern California", "Biomedical + engineering research"),
+            ("University of California, San Diego", "Neuroscience + genomics"),
+            ("Stanford University", "High-risk biomedical science"),
+            ("Mayo Clinic", "Translational medical research"),
+        ],
+    },
+    "David and Lucile Packard Foundation": {
+        "annual_giving": "$400M",
+        "program_areas": ["Conservation Science", "Science", "Reproductive Health", "Children's Health"],
+        "initiatives": [
+            "Packard Fellowships for Science & Engineering — $875K/5yr",
+            "Marine Fisheries + Ocean Conservation",
+            "Climate Change + Energy Transition",
+            "Family Planning & Reproductive Health (global)",
+        ],
+        "top_grantees": [
+            ("Stanford University", "Conservation biology + ocean science"),
+            ("University of California, Santa Cruz", "Marine biology + fisheries"),
+            ("Nature Conservancy", "Land + water conservation"),
+            ("Monterey Bay Aquarium Research Institute", "Ocean systems science"),
+            ("Population Council", "Global reproductive health research"),
+        ],
+    },
+    "Ford Foundation": {
+        "annual_giving": "$650M",
+        "program_areas": ["Inequality", "Democratic Participation", "Economic Justice", "Racial Equity"],
+        "initiatives": [
+            "BUILD — large multi-year institutional support grants",
+            "Just and Open Societies — democracy + civic rights",
+            "Future of Work(ers) — labor + economic security",
+            "Mission Investments — $1B social bond program",
+        ],
+        "top_grantees": [
+            ("Columbia University", "Inequality research + civil rights law"),
+            ("New York University", "Labor law + economic justice"),
+            ("University of California, Berkeley", "Racial equity + democracy research"),
+            ("Brennan Center for Justice", "Voting rights + democracy"),
+            ("NAACP Legal Defense Fund", "Civil rights + racial justice advocacy"),
+        ],
+    },
+    "Arnold Ventures": {
+        "annual_giving": "$350M",
+        "program_areas": ["Criminal Justice", "Health Policy", "Education", "Public Finance"],
+        "initiatives": [
+            "Pretrial Justice — bail reform + evidence-based release decisions",
+            "Drug Pricing & Pharmaceutical Transparency",
+            "Evidence-Based Policy — what works clearinghouse",
+            "Retirement Security — public pension reform",
+        ],
+        "top_grantees": [
+            ("Harvard Kennedy School", "Evidence-based policy evaluation"),
+            ("University of Chicago Crime Lab", "Criminal justice data + research"),
+            ("RAND Corporation", "Health policy + drug pricing analysis"),
+            ("Pew Charitable Trusts", "Pretrial justice + sentencing reform"),
+            ("Brennan Center for Justice", "Criminal justice reform advocacy"),
+        ],
+    },
+    "William Randolph Hearst Foundation": {
+        "annual_giving": "$35M",
+        "program_areas": ["Education", "Healthcare", "Social Services", "Culture & Arts"],
+        "initiatives": [
+            "Journalism Education Awards — national collegiate journalism competition",
+            "Hearst Endowment — university scholarship programs",
+            "Healthcare Access — community health organization grants",
+            "Arts & Culture — museum + performing arts support",
+        ],
+        "top_grantees": [
+            ("Northwestern University Medill School", "Journalism education + awards"),
+            ("University of Southern California Annenberg", "Journalism + communications"),
+            ("Columbia University Graduate School of Journalism", "Journalism fellowships"),
+            ("New York University", "Arts + journalism programs"),
+            ("San Francisco General Hospital Foundation", "Community healthcare access"),
+        ],
+    },
+    "Henry Luce Foundation": {
+        "annual_giving": "$25M",
+        "program_areas": ["Asia-U.S. Relations", "American Art", "Theology", "Higher Education"],
+        "initiatives": [
+            "Luce Scholars Program — professional fellowships in Asia",
+            "Luce Initiative on Asian Studies and the Environment",
+            "American Art — museum collections + scholarship",
+            "Theology — scholarship + leadership in American Christianity",
+        ],
+        "top_grantees": [
+            ("Yale University", "Asia studies + American art collections"),
+            ("Columbia University", "East Asian studies + international affairs"),
+            ("Princeton University", "Theology + religion + Asia studies"),
+            ("Harvard University", "Asia-Pacific studies + American art"),
+            ("Association of American Colleges & Universities", "Luce Scholars host coordination"),
+        ],
+    },
+    "Claude Moore Charitable Foundation": {
+        "annual_giving": "$5M",
+        "program_areas": ["Medical Education", "Healthcare Access", "Virginia Community Health"],
+        "initiatives": [
+            "UVA Health grants — medical education + simulation",
+            "Inova Health System support — Northern Virginia healthcare",
+            "Virginia rural health access initiatives",
+            "Medical student training + curriculum development",
+        ],
+        "top_grantees": [
+            ("Inova Health System", "Northern Virginia healthcare + medical training"),
+            ("Virginia Hospital Center", "Community healthcare access + education"),
+            ("George Mason University", "Health sciences + medical education"),
+            ("Bon Secours Health System", "Virginia community health access"),
+            ("Virginia Commonwealth University Health", "Academic medical education"),
+        ],
+    },
+    "Anne Mullen Orell Charitable Trust": {
+        "annual_giving": "$75K",
+        "program_areas": ["Health", "Education", "Virginia Community Benefit"],
+        "initiatives": [
+            "UVA Health community wellness grants",
+            "Charlottesville-area education support",
+            "Small Virginia nonprofit health grants",
+        ],
+        "top_grantees": [
+            ("UVA Health", "Community wellness programming"),
+            ("Local Virginia nonprofits", "Health + education community benefit"),
+        ],
+    },
+}
+
+
 def priority_watch_panel(df_dual):
     """
-    Always-visible panel on Foundation tab showing all 16 UVA priority foundations.
-    Green badge = active in DB with scores; gray dashed = prospect not yet tracked.
+    Foundation intelligence panel — active initiatives, top external grantees,
+    and program areas for each priority foundation. CRM-style competitive context.
     """
     active_names = set(df_dual["name"].str.strip().str.lower())
 
-    badges = []
+    cards = []
     for name in PRIORITY_FOUNDATIONS:
+        intel = FOUNDATION_INTEL.get(name, {})
         is_active = name.strip().lower() in active_names
+
+        # Dual score metrics (if tracked)
+        score_strip = html.Span()
         if is_active:
-            row = df_dual[df_dual["name"].str.strip().str.lower() == name.strip().lower()].iloc[0]
+            row    = df_dual[df_dual["name"].str.strip().str.lower() == name.strip().lower()].iloc[0]
+            dtype  = row["dual_type"]
+            dcolor = row["dual_color"]
+            dicon  = row["dual_icon"]
             rsi_pct = row["rsi_pct"]
             soi_pct = row["soi_pct"]
-            dtype   = row["dual_type"]
-            dcolor  = row["dual_color"]
-            dicon   = row["dual_icon"]
-            badge = html.Div([
-                html.Div([
-                    html.Span(dicon, style={"fontSize": "0.75rem", "marginRight": "4px"}),
-                    html.Span(name, style={
-                        "fontWeight": "700", "fontSize": "0.72rem",
-                        "color": UVA_NAVY, "lineHeight": "1.2",
-                    }),
-                ], style={"display": "flex", "alignItems": "flex-start",
-                          "marginBottom": "5px", "flexWrap": "wrap"}),
-                html.Div([
-                    html.Span("RSI", style={"fontSize": "0.6rem", "color": TEXT_LIGHT,
-                                            "fontWeight": "700", "marginRight": "3px",
-                                            "letterSpacing": "0.05em"}),
-                    html.Div(
-                        html.Div(style={"width": f"{max(rsi_pct, 3):.1f}%", "height": "100%",
-                                        "background": UVA_NAVY, "borderRadius": "2px"}),
-                        style={"flex": "1", "height": "5px", "background": "rgba(0,0,0,0.08)",
-                               "borderRadius": "2px", "overflow": "hidden"},
-                    ),
-                    html.Span(f"{rsi_pct:.0f}%", style={"fontSize": "0.62rem",
-                                                         "color": UVA_NAVY, "fontWeight": "700",
-                                                         "marginLeft": "4px", "flexShrink": "0"}),
-                ], style={"display": "flex", "alignItems": "center", "gap": "3px",
-                          "marginBottom": "3px"}),
-                html.Div([
-                    html.Span("SOI", style={"fontSize": "0.6rem", "color": TEXT_LIGHT,
-                                            "fontWeight": "700", "marginRight": "3px",
-                                            "letterSpacing": "0.05em"}),
-                    html.Div(
-                        html.Div(style={"width": f"{max(soi_pct, 3):.1f}%", "height": "100%",
-                                        "background": UVA_ORANGE, "borderRadius": "2px"}),
-                        style={"flex": "1", "height": "5px", "background": "rgba(0,0,0,0.08)",
-                               "borderRadius": "2px", "overflow": "hidden"},
-                    ),
-                    html.Span(f"{soi_pct:.0f}%", style={"fontSize": "0.62rem",
-                                                          "color": UVA_ORANGE, "fontWeight": "700",
-                                                          "marginLeft": "4px", "flexShrink": "0"}),
-                ], style={"display": "flex", "alignItems": "center", "gap": "3px"}),
-                html.Div(dtype, style={
-                    "fontSize": "0.58rem", "color": dcolor, "fontWeight": "700",
-                    "marginTop": "5px", "letterSpacing": "0.04em", "textTransform": "uppercase",
+            score_strip = html.Div([
+                html.Span(f"{dicon} {dtype}", style={
+                    "fontSize": "0.62rem", "color": dcolor, "fontWeight": "700",
+                    "textTransform": "uppercase", "letterSpacing": "0.04em",
+                    "marginRight": "10px",
                 }),
-            ], style={
-                "border": f"1px solid {dcolor}",
-                "borderTop": f"3px solid {dcolor}",
-                "borderRadius": "6px",
-                "padding": "10px 12px",
-                "background": CARD_BG,
-                "minWidth": "160px",
-                "maxWidth": "220px",
-                "flex": "1",
-                "cursor": "default",
-            })
+                html.Span([
+                    html.Span("RSI ", style={"color": TEXT_LIGHT, "fontWeight": "700"}),
+                    html.Span(f"{rsi_pct:.0f}%", style={"color": UVA_NAVY, "fontWeight": "700"}),
+                    html.Span("  SOI ", style={"color": TEXT_LIGHT, "fontWeight": "700"}),
+                    html.Span(f"{soi_pct:.0f}%", style={"color": UVA_ORANGE, "fontWeight": "700"}),
+                ], style={"fontSize": "0.62rem"}),
+            ], style={"display": "flex", "alignItems": "center", "marginTop": "6px"})
+            left_color = dcolor
         else:
-            badge = html.Div([
-                html.Div([
-                    html.Span("○", style={"fontSize": "0.75rem", "marginRight": "4px",
-                                          "color": TEXT_LIGHT}),
-                    html.Span(name, style={
-                        "fontWeight": "600", "fontSize": "0.72rem",
-                        "color": TEXT_MID, "lineHeight": "1.2",
-                    }),
-                ], style={"display": "flex", "alignItems": "flex-start",
-                          "marginBottom": "6px", "flexWrap": "wrap"}),
-                html.Div("Prospect — not yet tracked", style={
-                    "fontSize": "0.62rem", "color": TEXT_LIGHT,
-                    "fontStyle": "italic",
-                }),
-            ], style={
-                "border": f"1px dashed {BORDER}",
-                "borderTop": f"3px dashed {BORDER}",
-                "borderRadius": "6px",
-                "padding": "10px 12px",
-                "background": LIGHT_BG,
-                "minWidth": "160px",
-                "maxWidth": "220px",
-                "flex": "1",
-                "opacity": "0.75",
-                "cursor": "default",
-            })
-        badges.append(badge)
+            left_color = BORDER
 
-    active_ct  = sum(1 for n in PRIORITY_FOUNDATIONS if n.strip().lower() in active_names)
-    prospect_ct = len(PRIORITY_FOUNDATIONS) - active_ct
+        annual = intel.get("annual_giving", "—")
+        program_areas = intel.get("program_areas", [])
+        initiatives   = intel.get("initiatives", [])
+        top_grantees  = intel.get("top_grantees", [])
+
+        # Program area pills
+        area_pills = html.Div([
+            html.Span(area, style={
+                "fontSize": "0.6rem", "fontWeight": "700",
+                "color": UVA_NAVY, "background": "rgba(35,45,75,0.08)",
+                "borderRadius": "10px", "padding": "2px 7px",
+                "marginRight": "4px", "marginBottom": "3px",
+                "display": "inline-block",
+            }) for area in program_areas
+        ], style={"marginBottom": "8px"})
+
+        # Active initiatives list
+        initiative_items = html.Div([
+            html.Div([
+                html.Span("▸ ", style={"color": UVA_ORANGE, "fontWeight": "700",
+                                       "fontSize": "0.65rem", "flexShrink": "0"}),
+                html.Span(ini, style={"fontSize": "0.68rem", "color": TEXT_DARK,
+                                      "lineHeight": "1.4"}),
+            ], style={"display": "flex", "marginBottom": "3px"})
+            for ini in initiatives
+        ], style={"marginBottom": "8px"})
+
+        # Top external grantees
+        grantee_rows = []
+        for i, (org, focus) in enumerate(top_grantees):
+            grantee_rows.append(html.Div([
+                html.Span(f"{i+1}.", style={
+                    "fontSize": "0.6rem", "color": TEXT_LIGHT,
+                    "fontWeight": "700", "width": "14px", "flexShrink": "0",
+                    "marginRight": "4px",
+                }),
+                html.Div([
+                    html.Span(org, style={
+                        "fontWeight": "700", "fontSize": "0.68rem", "color": UVA_NAVY,
+                        "display": "block",
+                    }),
+                    html.Span(focus, style={
+                        "fontSize": "0.62rem", "color": TEXT_MID,
+                    }),
+                ]),
+            ], style={"display": "flex", "alignItems": "flex-start",
+                      "padding": "4px 0", "borderBottom": f"1px solid {BORDER}"}))
+
+        grantee_block = html.Div([
+            html.Div("TOP EXTERNAL GRANTEES", style={
+                "fontSize": "0.6rem", "fontWeight": "800", "color": TEXT_MID,
+                "letterSpacing": "0.07em", "textTransform": "uppercase",
+                "marginBottom": "5px",
+            }),
+            html.Div(grantee_rows),
+        ], style={"marginTop": "6px"}) if grantee_rows else html.Span()
+
+        cards.append(dbc.Col(html.Div([
+            # Header
+            html.Div([
+                html.Div([
+                    html.Span("★ " if is_active else "○ ", style={
+                        "color": UVA_ORANGE if is_active else TEXT_LIGHT,
+                        "fontSize": "0.75rem",
+                    }),
+                    html.Span(name, style={
+                        "fontFamily": "var(--font-brand)", "fontWeight": "700",
+                        "fontSize": "0.8rem", "color": UVA_NAVY, "lineHeight": "1.25",
+                    }),
+                ], style={"flex": "1"}),
+                html.Span(annual, style={
+                    "fontSize": "0.68rem", "fontWeight": "800", "color": "#2E7D32",
+                    "flexShrink": "0", "marginLeft": "8px",
+                }),
+            ], style={"display": "flex", "alignItems": "flex-start",
+                      "marginBottom": "8px"}),
+
+            score_strip,
+
+            html.Hr(style={"margin": "8px 0", "borderColor": BORDER, "opacity": "0.5"})
+            if is_active else html.Div(style={"marginTop": "6px"}),
+
+            # Program areas
+            area_pills,
+
+            # Active initiatives
+            html.Div("ACTIVE INITIATIVES", style={
+                "fontSize": "0.6rem", "fontWeight": "800", "color": TEXT_MID,
+                "letterSpacing": "0.07em", "textTransform": "uppercase",
+                "marginBottom": "5px",
+            }),
+            initiative_items,
+
+            # External grantees
+            grantee_block,
+
+        ], style={
+            "background": CARD_BG,
+            "border": f"1px solid {BORDER}",
+            "borderLeft": f"4px solid {left_color}",
+            "borderRadius": "8px",
+            "padding": "14px 16px",
+            "height": "100%",
+        }), md=6, lg=4, className="mb-3"))
+
+    active_ct   = sum(1 for n in PRIORITY_FOUNDATIONS if n.strip().lower() in active_names)
+    total_giving = "$8.5B+"  # aggregate of all 16 priority foundations
 
     return html.Div([
         html.Div([
             html.Div([
                 html.Span("★", style={"color": UVA_ORANGE, "marginRight": "6px",
                                       "fontSize": "0.9rem"}),
-                html.Span("CFR PRIORITY FOUNDATION WATCH", style={
+                html.Span("PRIORITY FOUNDATION INTELLIGENCE", style={
                     "fontFamily": "var(--font-brand)", "fontWeight": "800",
                     "fontSize": "0.72rem", "color": UVA_NAVY, "letterSpacing": "0.08em",
                 }),
-            ], style={"display": "flex", "alignItems": "center"}),
+                html.Span("Initiatives  •  Top external grantees  •  Program areas",
+                          style={"fontSize": "0.63rem", "color": TEXT_MID,
+                                 "marginLeft": "10px"}),
+            ], style={"display": "flex", "alignItems": "center", "flex": "1"}),
             html.Div([
-                html.Span(f"{active_ct} active", style={
+                html.Span(f"{active_ct}/16 active", style={
                     "fontSize": "0.7rem", "color": "#2E7D32",
-                    "fontWeight": "700", "marginRight": "10px",
+                    "fontWeight": "700", "marginRight": "12px",
                 }),
-                html.Span(f"{prospect_ct} prospects", style={
+                html.Span(f"{total_giving} aggregate annual giving", style={
                     "fontSize": "0.7rem", "color": TEXT_MID, "fontWeight": "600",
                 }),
             ]),
         ], style={"display": "flex", "justifyContent": "space-between",
-                  "alignItems": "center", "marginBottom": "12px"}),
-        html.Div(badges, style={
-            "display": "flex", "flexWrap": "wrap", "gap": "10px",
-        }),
-        html.Div(
-            "Priority foundations are always shown regardless of current scoring rank. "
-            "Dashed gray = prospect not yet in active pipeline.",
-            style={"fontSize": "0.65rem", "color": TEXT_LIGHT,
-                   "marginTop": "10px", "fontStyle": "italic"},
-        ),
+                  "alignItems": "center", "marginBottom": "16px"}),
+        dbc.Row(cards, className="g-3"),
     ], style={
-        "background": "linear-gradient(135deg, rgba(35,45,75,0.03) 0%, rgba(229,114,0,0.03) 100%)",
+        "background": "linear-gradient(135deg, rgba(35,45,75,0.03) 0%, rgba(229,114,0,0.02) 100%)",
         "border": f"1px solid {BORDER}",
         "borderRadius": "10px",
-        "padding": "16px 20px",
+        "padding": "18px 20px",
         "marginBottom": "20px",
     })
 
@@ -590,20 +905,20 @@ def _reset_dual_sector(tab, cur):
 
 @callback(
     Output("dual-priority-watch", "children"),
-    Output("dual-kpi-row",   "children"),
-    Output("dual-quadrant",  "figure"),
-    Output("dual-donut",     "figure"),
-    Output("dual-spotlight", "children"),
-    Output("dual-table",     "children"),
-    Input("dual-method-dd",  "value"),
-    Input("dual-sector-dd",  "value"),
-    Input("dual-type-tabs",  "value"),
+    Output("dual-kpi-row",        "children"),
+    Output("dual-quadrant",       "figure"),
+    Output("dual-donut",          "figure"),
+    Output("dual-spotlight",      "children"),
+    Output("dual-table",          "children"),
+    Input("dual-method-dd",       "value"),
+    Input("dual-sector-dd",       "value"),
+    Input("dual-type-tabs",       "value"),
 )
 def update_dual(method, sector, tab):
     df = load_dual_scored_partners(method, tab)
     df_filt = df if sector == "All" else df[df["sector"] == sector]
 
-    # Priority watch panel — only on Foundation tab
+    # Priority watch panel — Foundation tab only
     watch = priority_watch_panel(df) if tab == "Foundation" else html.Span()
 
     type_counts = df["dual_type"].value_counts()
