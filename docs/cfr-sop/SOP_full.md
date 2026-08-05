@@ -1,7 +1,7 @@
 # Corporate & Foundation Relations — Standard Operating Procedure
 ## Complex Industry-Supported Research Gifts
 
-*Draft v1.0 — informed by the PBM Capital / Manning Institute gift*
+*Draft v0.2 — informed by the PBM Capital gift*
 
 ## Purpose
 
@@ -48,7 +48,9 @@ Provide a repeatable framework for evaluating, structuring, documenting, and ste
 
 **Assemble the team** (chain of engagement)
 
-Corporate Relations → Development Officer → Department Leadership → Health Development (if applicable) → Office of Sponsored Programs → Gift Administration → Finance → Legal → Research Administration → Collaborating Institution
+Corporate Relations → Development Officer / Health Development* → Department Leadership → Office of Sponsored Programs → Gift Administration → Finance → Legal → Research Administration → Collaborating Institution
+
+*Development Officer and Health Development are treated as one role in this chain — Health Development is the equivalent fundraising function within the Health System, not a separate stakeholder.
 
 **Assign ownership:** Relationship lead, agreement lead, budget lead, compliance lead, accounting lead, stewardship lead.
 
@@ -108,7 +110,7 @@ Corporate Relations → Development Officer → Department Leadership → Health
 
 **Review chain:** Administrative fees → Indirect costs (F&A) → Gift assessment → Budget → Payment timing → Account setup → Recognition
 
-**Lesson learned:** Health Development applies a 5% administrative fee to gifts not designated to the general fund. Whenever appropriate, discuss whether the donor would consider covering this separately through an unrestricted gift — this preserves intended research dollars.
+**Lesson learned:** Health Development applies a 5% administrative fee to gifts not designated to the general fund. This fee should be structured as an addition on top of the gift — negotiated with the donor upfront — not deducted from the committed research funds. Raising this explicitly during the Financial Review stage keeps the full intended amount available for research.
 
 ---
 
@@ -140,7 +142,7 @@ Corporate Relations → Development Officer → Department Leadership → Health
 
 **Once gift closes, identify:** Additional researchers → Centers → Corporate engagement → Consortium opportunities → Future proposals → Strategic partnership
 
-**PBM example:** Research Gift → Manning Institute → BridgeBio → PBM Network → Potential $50M–100M future opportunity
+**PBM example:** Research Gift → BridgeBio → PBM Network → Potential $50M–100M future opportunity *(chain under review — confirm entities before reuse)*
 
 ---
 
@@ -149,8 +151,8 @@ Corporate Relations → Development Officer → Department Leadership → Health
 | Role | Primary Responsibility |
 |---|---|
 | CFR | Relationship quarterback; donor strategy; funding pathway education |
-| Development Officer | Faculty relationship; stewardship; fundraising strategy |
-| OSP | Sponsored research review; subawards; compliance support |
+| Development Officer / Health Development | Faculty relationship; stewardship; fundraising strategy (same function, central Advancement or Health System) |
+| OSP | Sponsored research review; subawards; compliance support; **disbursement of funds to a collaborating institution** — often the only office able to send funds externally |
 | Gift Administration | Gift acceptance; accounting; donor crediting |
 | Legal | Agreement review; institutional risk |
 | Finance | Budgeting; payment routing; account setup |
@@ -175,10 +177,10 @@ Corporate Relations → Development Officer → Department Leadership → Health
 | Lesson | Future Standard |
 |---|---|
 | Donor intent changed over time. | Revisit donor motivation throughout the process. |
-| OSP became a critical partner. | Engage OSP early for any research-related industry gift. |
+| OSP was the only office with a mechanism to disburse funds externally — Gift Administration / Advancement Accounting cannot send funds out. OSP ended up housing and disbursing the portion due to the collaborating institution. | Engage OSP early on any gift involving a collaborating institution — not only for compliance review, but because OSP's payment/subaward mechanism may be required to actually move the funds. |
 | Multi-party gifts require special accounting. | Involve Gift Administration before agreements are finalized. |
 | The Statement of Work clarified intent without creating obligations. | Develop a reusable SOW template for unrestricted research gifts. |
-| The 5% Health Development fee reduced available research funding. | Discuss fee treatment early and consider separate unrestricted support when appropriate. |
+| The 5% Health Development fee can reduce research dollars if it isn't addressed upfront. | Negotiate the fee as an addition on top of the gift, discussed with the donor upfront, so it never comes out of committed research funds. |
 | Stewardship expectations must remain philanthropic. | Separate stewardship from sponsored reporting requirements. |
 | Multiple offices touched the project. | Assign a single CFR lead to quarterback communication and maintain a seamless donor experience. |
 
